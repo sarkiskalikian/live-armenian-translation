@@ -20,7 +20,7 @@ class Transcriber:
                  spin: bool = True):
         """threads=None and spin=True reproduce ONNX Runtime's defaults (all cores,
         busy-waiting between runs), i.e. the T-LIVE-1 configuration. Capping threads
-        and disabling spinning are candidate mitigations for the mic loss (D10)."""
+        and disabling spinning are candidate mitigations for the mic frame shortfall (D10)."""
         import onnx_asr
         import onnxruntime as rt
 

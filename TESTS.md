@@ -1,5 +1,12 @@
 # Test log
 
+**Terminology (revised 2026-10-30 23:50).** *Frame shortfall*: a stream delivered
+fewer frames than wall time x nominal rate (measured from frame counts or
+derived from timing). *Unrecovered-lag event*: lateness > 0.3 s that did not
+recover within 1 s (measured by the aligner). Neither proves that the device
+dropped audio - a slow device clock or frames dropped elsewhere would look the
+same. Earlier wording ("lost", "loss events") has been changed accordingly.
+
 Every entry separates **measured** facts (read from logs/recordings) from
 **inferred** conclusions and **hypotheses**. Audio, logs and models are not in
 the repo; the log folder names are given so results can be re-checked locally.
@@ -39,7 +46,7 @@ Synthetic buffers through aligner -> converter -> segmenter -> worker with
 stub models. Verified: phrase end times within 20 ms; queue wait accounted
 when sources overlap; late first buffer + burst no longer shifts a stream;
 no zeros inserted into speech for late buffers; idle loopback gap filled;
-a 7 % buffer loss is reported as lost (6.4 of 6.7 s) with delivered ratio
+a simulated 7 % buffer drop is reported as unrecovered lag (6.4 of 6.7 s) with delivered ratio
 0.929. These are logic tests only, not evidence about the real device.
 
 ## T-MT-1 - Translation benchmark (2026-10-30 ~20:44, partial M1)
@@ -82,11 +89,11 @@ Measured (per-phrase log, 14 mic + 11 remote phrases, 48.5 s of speech):
   ratio below is derived from timing, not counted.
 
 Derived: the mic's sample clock advanced at 1/(1+0.0769) = 92.9 % of wall
-time, i.e. ~7 s of samples missing after ~90 s. Phrase timestamps for "Me"
+time, i.e. a shortfall of ~7 s of samples after ~90 s. Phrase timestamps for "Me"
 were early by that amount (e.g. a reply stamped 74.0 s, before the remote
 sentence it answers, was really spoken around 79.8 s).
 
-Inferred (not proven): the missing samples were never delivered (audio loss),
+Hypothesis (not proven): the missing samples were never delivered,
 which matches the user's missed words. Alternatives not yet excluded: the
 device running at a lower real sample rate under some condition, or samples
 lost inside PortAudio without an overflow flag. T-LIVE-0 and T-M0-1 show the
@@ -106,29 +113,29 @@ Accuracy notes (same log): when the Armenian was right the English was right
 live?"). Bad lines started with bad recognition ("Հեռեւ ձեզ, ո՞նցեքք" for
 "Բարև ձեզ, ո՞նց եք" -> "Away from you"; a lone "֊։" -> invented "What is it?").
 
-## T-LIVE-2 - Models off, T-LIVE-1 settings (2026-10-30 21:54) - mic loss REPRODUCED
+## T-LIVE-2 - Models off, T-LIVE-1 settings (2026-10-30 21:54) - mic frame shortfall REPRODUCED
 `logs/20261030-215404`, commit b72c767, `--no-models` (capture + resampling +
 Silero VAD only; no ASR/MT loaded), capture buffer 20 ms, same Meet call setup.
 Planned 2 min; the run lasted **15.6 s** (user stopped it), so ratios are coarse.
 
 Measured (`summary.json` -> `capture`; sample counts are now logged):
 - Me: delivered_ratio 0.840 (frames received / frames expected since the
-  stream's first sample); 3 confirmed loss events totalling 1.57 s (live
+  stream's first sample); 3 unrecovered-lag events totalling 1.57 s (live
   warnings at ~10 s and ~12 s, about 0.5 s each); 6 late-but-recovered events;
   max lateness 0.556 s; 0 overflow flags.
-- Remote: delivered_ratio 0.993; 0 loss events; max lateness 0.003 s.
+- Remote: delivered_ratio 0.993; 0 unrecovered-lag events; max lateness 0.003 s.
 - 4 phrases (3 Me, 1 Remote), latency 0.54-0.96 s (VAD wait only).
 
 Inferred:
-- The mic loses audio **without** any ASR/MT CPU load, so H1 (model CPU
+- The mic shows the frame shortfall **without** any ASR/MT CPU load, so H1 (model CPU
   starvation) cannot be the sole cause. Whether model load makes it worse is
   unknown. The ASR/OMP mitigations from D10 are therefore not the first lever.
-- ~~The loss comes in ~0.5 s blocks~~ **Corrected after T-REC-2:** the ~0.5 s
-  events are an artefact of the loss detector (it confirms a deficit once
+- ~~The shortfall comes in ~0.5 s blocks~~ **Corrected after T-REC-2:** the ~0.5 s
+  events are an artefact of the lag detector (it confirms a deficit once
   lateness has exceeded 0.3 s for 1 s), so a steady shortfall also shows up
-  as regular ~0.45 s events. The data do not show whether the loss is bursty.
-- 1.57 s confirmed lost of ~14.7 s explains ~11 %; the rest of the 16 % gap is
-  lateness still unconfirmed when the run stopped (loss is only confirmed
+  as regular ~0.45 s events. The data do not show whether the shortfall is bursty.
+- 1.57 s of unrecovered lag in ~14.7 s explains ~11 %; the rest of the 16 % gap is
+  lateness still unconfirmed when the run stopped (lag is only logged as unrecovered
   after 1 s without recovery).
 
 Contrast with T-M0-1: same mic, same Meet setup with remote speech, 20 ms
@@ -144,7 +151,7 @@ Hypotheses now (unconfirmed):
   condition that differed from the T-M0-1 session (time-varying).
 - H1 model CPU load: may still contribute; not the sole cause.
 
-## T-REC-2 - Plain recorder in the same Meet call (2026-10-30 22:01) - mic loss REPRODUCED
+## T-REC-2 - Plain recorder in the same Meet call (2026-10-30 22:01) - mic frame shortfall REPRODUCED
 `recordings/20261030-220126`, commit 7938c53, `tools/m0_record.py --seconds 120`,
 20 ms buffer; no VAD, no resampling, no models (per buffer: write WAV only).
 Both people talked (mic active 36 %, loopback 31 % of 50 ms frames).
@@ -152,15 +159,15 @@ User impression after the run: "no problem in capturing the sounds".
 
 Measured (raw frame counts from PortAudio, independent of the aligner):
 - Mic: 4,985,280 frames = 103.86 s over 118.91 s since its first sample ->
-  **0.873** delivered; 32 loss events (14.70 s) at a regular ~3 s spacing,
+  **0.873** delivered; 32 unrecovered-lag events (14.70 s) at a regular ~3 s spacing,
   each 0.35-0.50 s, in speech and in silence alike; 41 late-but-recovered;
   0 overflow flags.
-- Loopback: 5,718,720 frames = 119.14 s over 118.87 s -> 1.002; no loss.
+- Loopback: 5,718,720 frames = 119.14 s over 118.87 s -> 1.002; no shortfall.
 
 Inferred:
-- The plain recorder loses mic audio at the same order of magnitude as the
+- The plain recorder shows a mic frame shortfall of the same order as the
   live program, so neither the models (H1) nor the live pipeline's per-buffer
-  work (H2) is necessary for the loss.
+  work (H2) is necessary for the shortfall.
 - The regular spacing matches a steady deficit of ~13 % seen through the
   detector (0.127 s/s reaches the 0.3 s threshold, is confirmed 1 s later at
   ~0.43 s, then resets), see the correction under T-LIVE-2.
@@ -195,8 +202,8 @@ Measured:
   0.14-0.21, ASR 0.34-0.49, MT 0.70-0.80 s.
 - Both >5 s lines are the first two phrases: phrase 1 ASR 1.8 s + MT 2.9 s
   (cold start despite the warm-up call), phrase 2 then queued 3.4 s.
-- Capture: Me delivered 0.909, 10.36 s lost in 25 events (known issue);
-  Remote 0.997, no loss.
+- Capture: Me delivered 0.909, 10.36 s of unrecovered lag in 25 events (known issue);
+  Remote 0.997, no shortfall.
 
 Quality, assistant's reading of the 36 lines (approximate, to be confirmed
 by the user, who is a native speaker):
@@ -215,7 +222,7 @@ by the user, who is a native speaker):
 
 Inferred: recognition is the largest error source; MT adds errors on short
 colloquial phrases and names; one-letter outputs are a separate, cheap-to-fix
-defect. "Me" errors may be partly caused by the mic sample loss.
+defect. "Me" errors may be partly caused by the mic frame shortfall.
 
 ## T-OFF-1 - Minimum-letters rule replayed on T-LIVE-4 output (offline)
 Change: translate only if the recognised text has >= 2 Armenian alphabet
@@ -236,7 +243,7 @@ Not yet observed in a live run.
 
 ## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)
 Paused by user decision to resume work on recognition/translation output.
-Status: the mic loses ~7-16 % of its samples in every test since 21:13; cause
+Status: the mic delivers ~7-16 % fewer frames than expected in every test since 21:13; cause
 unknown. Rejected as *sole* causes: model CPU load (T-LIVE-2), live-pipeline
 processing (T-REC-2). Leading but unconfirmed: environment (H3). Until fixed,
 "Me" lines can miss words and their timestamps/latencies are less reliable;
@@ -244,6 +251,6 @@ processing (T-REC-2). Leading but unconfirmed: environment (H3). Until fixed,
 
 Ready but not run:
 - Per-callback logging is in place (commit eafc972, `callbacks_<source>.csv`).
-- T-REC-3: plain recorder with **Meet closed** (one variable). Loss gone ->
-  Meet's use of the mic is the trigger; loss remains -> system state since 21:13.
+- T-REC-3: plain recorder with **Meet closed** (one variable). Shortfall gone ->
+  Meet's use of the mic is the trigger; shortfall remains -> system state since 21:13.
 - T-LIVE-3: models on, test-1 settings (deferred).

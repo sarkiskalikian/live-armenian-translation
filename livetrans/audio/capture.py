@@ -12,7 +12,7 @@ Timing rules (learned from M0 and from load tests):
   estimated from the earliest-arriving buffer of a short warm-up window, not
   from the first buffer alone (a late first buffer followed by a catch-up burst
   would otherwise shift the whole stream late for the rest of the session).
-- Late delivery is not lost audio. Under CPU load (ASR running) callbacks can be
+- Late delivery is not missing audio. Under CPU load (ASR running) callbacks can be
   late by hundreds of ms and then arrive in a burst; inserting zeros there would
   corrupt speech. So zeros are only inserted when `fill_gaps` is on (loopback)
   AND the stream was quiet before the hole: WASAPI loopback simply stops
@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 GAP_TOLERANCE_S = 0.3     # lateness below this is normal jitter
-LOSS_CONFIRM_S = 1.0      # lateness that does not recover within this long = audio was lost
+RECOVERY_WINDOW_S = 1.0   # lateness still present after this long is logged as unrecovered lag
 WARMUP_S = 0.5            # audio collected before the start time is fixed
 IDLE_DB = -50.0           # "quiet" level for deciding that a loopback hole is idle time
 
@@ -53,8 +53,10 @@ class StreamStats:
     gaps: list[Gap] = field(default_factory=list)       # holes filled with zeros (idle loopback)
     filled_s: float = 0.0                  # total zeros inserted inside the recording
     late: list[Gap] = field(default_factory=list)       # late deliveries that recovered (audio intact)
-    lost: list[Gap] = field(default_factory=list)       # samples the device never delivered
-    lost_s: float = 0.0
+    # lateness that did not recover within RECOVERY_WINDOW_S: the stream delivered fewer
+    # frames than the wall clock expects. Cause not proven (dropped packets? slow clock?)
+    unrecovered: list[Gap] = field(default_factory=list)
+    unrecovered_s: float = 0.0
     max_lateness_s: float = 0.0
     max_queue: int = 0
 
@@ -67,13 +69,13 @@ class ChunkAligner:
     """Turns time-stamped int16 buffers into an aligned stream. Pure Python + numpy,
     so it can be tested without audio hardware."""
 
-    def __init__(self, rate: int, channels: int, t0: float, sink, fill_gaps: bool = False, on_loss=None):
+    def __init__(self, rate: int, channels: int, t0: float, sink, fill_gaps: bool = False, on_unrecovered=None):
         self.rate = rate
         self.channels = channels
         self.t0 = t0
         self.sink = sink              # callable(np.ndarray int16, shape (n, channels))
         self.fill_gaps = fill_gaps
-        self.on_loss = on_loss        # callable(Gap) when lost audio is confirmed (live warning)
+        self.on_unrecovered = on_unrecovered   # callable(Gap) for a live warning
         self._late_since: float | None = None
         self.written = 0              # frames handed to sink, including filled zeros
         self.stats = StreamStats()
@@ -145,8 +147,9 @@ class ChunkAligner:
         """Lateness = how far behind the wall clock this stream's samples are.
         Three cases when it exceeds the jitter tolerance:
           - loopback after quiet audio: WASAPI idle time -> fill with zeros now;
-          - it recovers within LOSS_CONFIRM_S: buffers were only late (CPU load) -> keep;
-          - it does not recover: the device dropped samples -> report as LOST and
+          - it recovers within RECOVERY_WINDOW_S: buffers were only late (CPU load) -> keep;
+          - it does not recover: the stream is short of frames (cause unknown) -> log it as
+            unrecovered lag and
             re-anchor the timeline with zeros so timestamps and latency stay true."""
         st = self.stats
         n = pcm.shape[0]
@@ -165,13 +168,13 @@ class ChunkAligner:
             elif self._late_since is None:
                 self._late_since = t_arrival
                 st.late.append(gap)
-            elif t_arrival - self._late_since >= LOSS_CONFIRM_S:
-                st.lost.append(gap)
-                st.lost_s += lateness
+            elif t_arrival - self._late_since >= RECOVERY_WINDOW_S:
+                st.unrecovered.append(gap)
+                st.unrecovered_s += lateness
                 self._fill(lateness)
                 self._late_since = None
-                if self.on_loss:
-                    self.on_loss(gap)
+                if self.on_unrecovered:
+                    self.on_unrecovered(gap)
         self._emit(pcm, ms)
 
     def delivered_ratio(self, t_now: float) -> float | None:
@@ -195,13 +198,14 @@ class ChunkAligner:
 class CaptureStream:
     """One PyAudio input stream feeding a ChunkAligner via a worker thread."""
 
-    def __init__(self, pa, device, t0: float, sink, buffer_s: float = 0.02, on_loss=None):
+    def __init__(self, pa, device, t0: float, sink, buffer_s: float = 0.02, on_unrecovered=None):
         import pyaudiowpatch as pyaudio   # imported here so ChunkAligner works without it
         self._pyaudio = pyaudio
         self.pa = pa
         self.device = device
         self.aligner = ChunkAligner(device.rate, device.channels, t0, sink,
-                                    fill_gaps=device.kind == "loopback", on_loss=on_loss)
+                                    fill_gaps=device.kind == "loopback",
+                                    on_unrecovered=on_unrecovered)
         self._q: queue.Queue = queue.Queue()
         self._stop = threading.Event()
         self._worker = threading.Thread(target=self._drain, daemon=True,

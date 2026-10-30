@@ -38,11 +38,11 @@ per-speaker labels come later.
 earliest arrival in a 0.5 s warm-up window (a late first buffer used to shift
 the whole stream: T-M0-1's +0.10 s). Late buffers are never padded with
 zeros; zeros are inserted only for idle loopback, or when lateness has not
-recovered for 1 s (confirmed loss), which is then reported as LOST.
+recovered for 1 s (unrecovered lag), reported as a frame shortfall of unknown cause.
 Verified with stub tests only.
 
-**D8 - Errors are reported, not hidden.** Lines over 5 s are flagged; lost
-audio, overflows, stalled devices and processing exceptions print `!!` lines
+**D8 - Errors are reported, not hidden.** Lines over 5 s are flagged; frame
+shortfalls, overflows, stalled devices and processing exceptions print `!!` lines
 live and are listed in the session summary. Wordless ASR output is not sent
 to MT (NLLB invents sentences for it).
 
@@ -50,7 +50,7 @@ to MT (NLLB invents sentences for it).
 decision, 2026-10-30): prioritise an end-to-end walking skeleton. Cost: no
 local WER number; accent risk unmeasured.
 
-**D10 - Debug the microphone loss one variable at a time.** The baseline
+**D10 - Debug the microphone frame shortfall one variable at a time.** The baseline
 commit already contains three mitigations applied together (ASR thread cap
 + no spinning, `OMP_WAIT_POLICY=PASSIVE`, capture buffer 20 -> 50 ms). An
 improvement with all three on would not show which one helped. Plan: make
@@ -58,10 +58,10 @@ them switchable with defaults equal to the T-LIVE-1 configuration, reproduce
 the failure (T-LIVE-3), then test each on its own. Status: open. Flags now
 exist (`--asr-threads N`, `--asr-no-spin`, `--omp-passive`, `--capture-buffer-ms N`);
 with none given the program runs the T-LIVE-1 configuration. Paused 2026-10-30
-22:14 (user decision) after T-LIVE-2 and T-REC-2 showed the loss without
+22:14 (user decision) after T-LIVE-2 and T-REC-2 showed the shortfall without
 models; the mitigation flags stay available but are untested.
 
 **D11 - Resume on recognition/translation quality with the known mic issue
 open.** Judge ASR/MT mainly on "Remote" lines (complete audio); treat "Me"
-lines as affected by sample loss. Keep changes small; commit only verified
+lines as affected by the frame shortfall. Keep changes small; commit only verified
 improvements.

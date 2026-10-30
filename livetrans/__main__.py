@@ -31,7 +31,7 @@ def main() -> int:
     ap.add_argument("--list-devices", action="store_true")
     ap.add_argument("--mic", type=int)
     ap.add_argument("--loopback", type=int)
-    # Candidate mitigations for the mic loss (DECISIONS.md D10). Defaults = T-LIVE-1 config;
+    # Candidate mitigations for the mic frame shortfall (DECISIONS.md D10). Defaults = T-LIVE-1 config;
     # change ONE per test run.
     ap.add_argument("--asr-threads", type=int, default=None, help="ONNX Runtime threads (default: all cores)")
     ap.add_argument("--asr-no-spin", action="store_true", help="stop ONNX Runtime busy-waiting between runs")
@@ -99,9 +99,10 @@ def main() -> int:
         worker.start()
         seg_kw = dict(min_silence_s=args.min_silence, max_speech_s=args.max_speech)
         pipes = {}
-        def loss_warning(label):
-            return lambda gap: worker.say(f"!! {label}: {gap.duration_s:.2f} s of audio LOST around "
-                                          f"{gap.start_s:.0f} s (device did not deliver it)")
+        def lag_warning(label):
+            return lambda gap: worker.say(f"!! {label}: stream {gap.duration_s:.2f} s behind real time around "
+                                          f"{gap.start_s:.0f} s and not catching up (fewer frames than expected; "
+                                          f"cause unknown)")
 
         for name, dev in (("mic", mic), ("loopback", lb)):
             label = "Me" if name == "mic" else "Remote"
@@ -109,7 +110,7 @@ def main() -> int:
             conv = To16kMono(dev.rate)
             pipes[name] = (seg, conv, CaptureStream(pa, dev, t0, lambda pcm, s=seg, c=conv: s.push(c(pcm)),
                                                     buffer_s=args.capture_buffer_ms / 1000,
-                                                    on_loss=loss_warning(label)))
+                                                    on_unrecovered=lag_warning(label)))
 
         problems: list[str] = []
         try:
@@ -151,17 +152,18 @@ def main() -> int:
             st = cap.aligner.stats
             ratio = cap.aligner.delivered_ratio(t_stop)
             capture[label] = {"session_s": round(t_stop - t0, 1), "delivered_ratio": ratio,
-                              "lost_s": round(st.lost_s, 2), "loss_events": len(st.lost),
+                              "unrecovered_lag_s": round(st.unrecovered_s, 2), "unrecovered_events": len(st.unrecovered),
                               "late_recovered": len(st.late), "idle_filled_s": round(st.filled_s, 2),
                               "overflows": st.overflows, "max_lateness_s": st.max_lateness_s,
                               "start_offset_s": st.start_offset_s}
             print(f"capture {label:6}: delivered {ratio if ratio is None else f'{ratio:.1%}'} of expected audio, "
-                  f"lost {st.lost_s:.2f} s in {len(st.lost)} events, overflows {st.overflows}")
-            if st.lost:
-                problems.append(f"{label}: {st.lost_s:.2f} s of audio LOST in {len(st.lost)} events "
+                  f"unrecovered lag {st.unrecovered_s:.2f} s in {len(st.unrecovered)} events, overflows {st.overflows}")
+            if st.unrecovered:
+                problems.append(f"{label}: frame shortfall - {st.unrecovered_s:.2f} s of unrecovered lag in "
+                                f"{len(st.unrecovered)} events; cause unknown "
                                 f"(delivered {ratio:.1%} of expected samples)")
             if st.overflows:
-                problems.append(f"{label}: {st.overflows} input buffer overflows (audio lost)")
+                problems.append(f"{label}: {st.overflows} input overflows reported by PortAudio")
         summary = summarize(worker.stats)
         summary["capture"] = capture
         summary["capture_problems"] = problems
