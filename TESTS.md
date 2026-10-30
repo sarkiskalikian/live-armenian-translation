@@ -183,6 +183,40 @@ Leading hypothesis now: **H3 environment** - a condition that started between
 21:04 and 21:13 and persisted (candidates: Meet's use of the same mic, e.g. its
 audio processing; Bluetooth activity; power/thermal state). Unconfirmed.
 
+## T-LIVE-4 - Armenian conversation, models on, T-LIVE-1 settings (2026-10-30 22:15)
+`logs/20261030-221541` (segment WAVs saved), commit eafc972 code, beam 4, 20 ms
+buffer. Two-person Meet call, 124 s, 36 phrases (22 Me, 14 Remote).
+User's judgement: "the English translation was correct but understanding the
+Armenian was not that much correct".
+
+Measured:
+- Latency: Me p50 1.97 s, p95 5.14 s, max 5.32 s, 2 over 5 s; Remote p50
+  1.70 s, p95 2.50 s, max 2.53 s, 0 over 5 s. Means: VAD wait 0.6-0.7, queue
+  0.14-0.21, ASR 0.34-0.49, MT 0.70-0.80 s.
+- Both >5 s lines are the first two phrases: phrase 1 ASR 1.8 s + MT 2.9 s
+  (cold start despite the warm-up call), phrase 2 then queued 3.4 s.
+- Capture: Me delivered 0.909, 10.36 s lost in 25 events (known issue);
+  Remote 0.997, no loss.
+
+Quality, assistant's reading of the 36 lines (approximate, to be confirmed
+by the user, who is a native speaker):
+- ~11 both correct or close ("Ես Հայաստանում եմ։" -> "I am in Armenia.").
+- ~13 recognition errors that carry into English ("Պատելի" for "Հաճելի";
+  "քինիկական" for "կլինիկական" -> "kinetic research"; "Կեանի՞ ես ... կանիսն ա"
+  for "ժամը քանիսն ա").
+- ~5 correct Armenian, wrong English ("Ես Վանաձորից եմ" -> "I'm from
+  Vancouver"; "Հաջողություն" -> "How can we succeed?"; "Ո՞նց եք" -> "Who are
+  you?"; "Երեւանո՞ւմ" -> "Where are they going?"); also the name "Գարուն"
+  translated as "Spring".
+- ~7 one-letter or near-empty recognitions (backchannels/laughter) that MT
+  turns into invented sentences ("Հ։" -> "A: What are you talking about?"
+  twice; "Ս։" -> "Q. What is this?"; "Հովհ." -> "John: How did you know?").
+  The existing filter only skips output with no Armenian letter at all.
+
+Inferred: recognition is the largest error source; MT adds errors on short
+colloquial phrases and names; one-letter outputs are a separate, cheap-to-fix
+defect. "Me" errors may be partly caused by the mic sample loss.
+
 ## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)
 Paused by user decision to resume work on recognition/translation output.
 Status: the mic loses ~7-16 % of its samples in every test since 21:13; cause
