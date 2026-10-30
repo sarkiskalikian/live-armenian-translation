@@ -326,12 +326,54 @@ Inferred:
   showed p50 1.31 vs 1.67 s and p95 2.49 vs 3.54 s for -0.7 chrF.
 - 5 phrases is too few to detect small quality differences.
 
+## E3 - ASR head: CTC fp32 vs RNN-T fp32, same NVIDIA weights (2026-10-31 01:17, laptop)
+`results/asr_{ctc,rnnt}_{fleurs,calls}.json`. Windows, Python 3.13.14,
+onnxruntime 1.31.1, onnx-asr 0.12.0, default threads, one untimed warm-up clip.
+CTC: OpenVoiceOS export @ f7db1fa (model.onnx 09ed4278...). RNN-T: Vana-Labs
+export @ ec92cef (encoder 541c3462..., decoder_joint 5bb91df1...). Same
+onnx-asr 80-band preprocessing. WER/CER after normalisation (case,
+punctuation, եւ/և). Bootstrap = 10,000 resamples of clips.
+
+FLEURS hy_am test, 100 clips, 1930 reference words, 11.7 s average audio:
+
+| | CTC fp32 | RNN-T fp32 |
+|---|---|---|
+| WER (95 % CI) | 11.92 % (9.75-14.22) | 11.40 % (9.33-13.58) |
+| word errors | 230 | 220 |
+| CER | 5.00 % | 4.81 % |
+| clips with 0 word errors | 28 % | 30 % |
+| clips with WER <= 10 % / 10-30 % / > 30 % | 58 / 32 / 10 % | 55 / 37 / 8 % |
+| worst clip WER | 50 % | 42 % |
+| time per clip median / p95 / max | 0.145 / 0.245 / 0.445 s | 0.772 / 1.162 / 1.663 s |
+| real-time factor | 0.013 | 0.068 |
+
+Paired (same 100 clips): RNN-T fewer errors on 25 clips, more on 15, same on
+60 (identical text on 33). WER difference RNN-T - CTC = -0.52 points, 95 %
+bootstrap CI -1.28 .. +0.26; two-sided sign test p = 0.15.
+
+Calls (4 confirmed intact Remote clips, 21 words): CTC 5 errors (23.8 %),
+RNN-T 7 errors (33.3 %); RNN-T worse on 2 clips, same on 2. Not
+interpretable: one of RNN-T's extra errors comes from the reference keeping
+the recogniser's spelling «դու՞ւք» (normalises to «դոււք»), against which
+RNN-T's standard «դու՞ք» counts as wrong; the other clips mix gains
+(«զբաղվում», «տաս») and new errors.
+
+Inferred:
+- RNN-T is slightly better on FLEURS read speech, but the difference is
+  within noise (CI includes 0, p = 0.15). This does not reproduce the
+  RNN-T > CTC gap suggested by Karpov et al. at a level we can detect with
+  100 clips.
+- RNN-T costs ~5x the compute (0.77 vs 0.15 s per 11.7 s clip); for 2-4 s
+  call phrases that is still well under the latency budget.
+- On call audio there is not enough data to judge either way.
+- Current model overall (CTC, FLEURS read speech): ~88 % of words correct;
+  roughly 1 in 4 clips perfect, 1 in 10 clips with more than 30 % of words wrong.
+
 ## Planned (2026-10-30 23:59) - run on the laptop, Windows .venv, pinned versions
 - E0 `python -m livetrans.models --verify` - pinned model hashes and runtime versions.
 - E1 done (see above).
 - E2 done (see above).
-- E3 `tools/asr_compare.py` - CTC fp32 vs RNN-T fp32 on FLEURS (100) and confirmed
-  intact call phrases; E4 RNN-T int8 only if E3 favours RNN-T.
+- E3 done (see above). E4 (RNN-T int8) not run: E3 did not establish that RNN-T fp32 is better.
 Sandbox runs of these scripts were functional checks only; their numbers are not results.
 
 ## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)

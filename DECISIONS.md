@@ -91,7 +91,13 @@ Plan, one variable at a time: (1) CTC fp32 vs RNN-T fp32 on the same intact
 clips (100 FLEURS test clips + user-corrected Remote call phrases), same
 preprocessing (onnx-asr's built-in 80-band NeMo features), same runtime;
 (2) only if RNN-T fp32 is better, RNN-T int8 vs RNN-T fp32. The live default
-changes only after a verified improvement.
+changes only after a verified improvement. Outcome (E3): RNN-T fp32 had 0.52 points lower
+WER on 100 FLEURS clips (11.40 vs 11.92 %), but the 95 % CI of the difference
+includes zero (-1.28 .. +0.26) and it is ~5x slower per clip; on 4 call clips
+it was not better. Decision: keep the CTC export as the live default; do not
+run the int8 step (its precondition was not met). The RNN-T export stays
+registered and pinned (ec92cef) for a later comparison on more call audio,
+which is the domain that matters and where we have only 4 confirmed clips.
 
 **D15 - Translation beam and warm-up are decided by measurement (open).**
 Beam 1 vs 4 on five call phrases (corrected Armenian and ASR output);

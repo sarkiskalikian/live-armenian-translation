@@ -42,10 +42,13 @@ MODELS = {
         sha256={"sentencepiece.bpe.model": "14bb8dfb35c0ffdea7bc01e56cea38b9e3d5efcdcb9c251d6b40538e1aab555a"}),
     # --- optional / under evaluation (not used by the live program) ---
     "asr-rnnt": dict(  # same NVIDIA weights, RNN-T (transducer) head, fp32 files only
-        repo="Vana-Labs/stt-fastconformer-armenian", revision=None,   # pinned after evaluation
+        repo="Vana-Labs/stt-fastconformer-armenian",
+        revision="ec92cef52199c3874681321b13853e8fe602d23f",   # the revision evaluated in E3
         dir=ASR_RNNT_DIR,
         patterns=["encoder-model.onnx", "decoder_joint-model.onnx", "vocab.txt", "config.json"],
-        sha256={}, optional=True),
+        sha256={"encoder-model.onnx": "541c34628b1e67d659f3c3f0a7c204b399c071a2988de8df6194daac54446ec9",
+                "decoder_joint-model.onnx": "5bb91df17e3660e8989279fa93152fdae8bae2093a9917bca119438a55edd623"},
+        optional=True),
 }
 CORE = [k for k, m in MODELS.items() if not m.get("optional")]
 
