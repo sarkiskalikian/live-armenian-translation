@@ -96,4 +96,7 @@ changes only after a verified improvement.
 **D15 - Translation beam and warm-up are decided by measurement (open).**
 Beam 1 vs 4 on five call phrases (corrected Armenian and ASR output);
 warm-up "minimal" vs "representative" in fresh processes. Start-up time is
-reported separately and never counted as live latency.
+reported separately and never counted as live latency. Warm-up decided (E1):
+keep "minimal" - the first phrase is already within ~0.07 s of warm, and
+"representative" adds ~2 s start-up without a measurable gain. The
+"representative" option stays available but is not the default.

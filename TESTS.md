@@ -241,9 +241,34 @@ Measured on the 36 recognised strings of `logs/20261030-221541`:
 
 Not yet observed in a live run.
 
+## E1 - Warm-up: minimal vs representative (2026-10-31 ~00:37, laptop)
+`results/warmup_check.json`, commit b834391, beam 4, default ASR threads.
+3 fresh processes per mode, alternating; clips = T-LIVE-4 Remote phrases
+00019.81, 00037.95, 00070.08 (3.1-4.4 s). Times are ASR / MT seconds, medians.
+
+| warm-up | load | warm-up | clip1 first | clip1 again | clip2 | clip3 |
+|---|---|---|---|---|---|---|
+| minimal | 6.03 | 1.11 | 0.131 / 0.629 | 0.065 / 0.571 | 0.060 / 0.553 | 0.078 / 0.644 |
+| representative | 8.88 | 3.16 | 0.183 / 0.689 | 0.058 / 0.506 | 0.067 / 0.624 | 0.107 / 0.547 |
+
+One run of each mode (representative run 2, minimal run 3) was slow on
+every step (ASR 0.45-2.06 s, MT 1.14-3.17 s), i.e. a machine-wide
+slowdown during that process, not a first-phrase effect; medians absorb it.
+
+Inferred:
+- With the existing minimal warm-up, the first phrase in a fresh process
+  costs ~0.07 s ASR and ~0.06 s MT more than the same phrase warm. The
+  representative warm-up gives no measurable gain and adds ~2 s start-up.
+  Decision: keep "minimal" (D15).
+- The T-LIVE-4 first phrase (ASR 1.8 s + MT 2.9 s) is not explained by
+  model cold start; it coincided with the start of capture during a Meet
+  call. Cause unconfirmed.
+- On this laptop MT (~0.55 s at beam 4) dominates per-phrase compute;
+  ASR is ~0.06-0.13 s for 3-4 s clips.
+
 ## Planned (2026-10-30 23:59) - run on the laptop, Windows .venv, pinned versions
 - E0 `python -m livetrans.models --verify` - pinned model hashes and runtime versions.
-- E1 `tools/warmup_check.py` - first-phrase cold start, minimal vs representative warm-up.
+- E1 done (see above).
 - E2 `tools/beam_check.py` - beam 1 vs 4 on 5 phrases, corrected Armenian and ASR output.
 - E3 `tools/asr_compare.py` - CTC fp32 vs RNN-T fp32 on FLEURS (100) and confirmed
   intact call phrases; E4 RNN-T int8 only if E3 favours RNN-T.
