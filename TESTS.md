@@ -183,9 +183,16 @@ Leading hypothesis now: **H3 environment** - a condition that started between
 21:04 and 21:13 and persisted (candidates: Meet's use of the same mic, e.g. its
 audio processing; Bluetooth activity; power/thermal state). Unconfirmed.
 
-## Pending
-- Instrument: log every PortAudio callback (arrival time, frames, status) so
-  dropped packets can be told apart from a slow device clock.
-- T-REC-3: same recorder, **Meet closed** (one variable). Loss gone -> Meet's
-  use of the mic is the trigger; loss remains -> system state since 21:13.
+## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)
+Paused by user decision to resume work on recognition/translation output.
+Status: the mic loses ~7-16 % of its samples in every test since 21:13; cause
+unknown. Rejected as *sole* causes: model CPU load (T-LIVE-2), live-pipeline
+processing (T-REC-2). Leading but unconfirmed: environment (H3). Until fixed,
+"Me" lines can miss words and their timestamps/latencies are less reliable;
+"Remote" lines are unaffected (loopback ~100 % in all tests).
+
+Ready but not run:
+- Per-callback logging is in place (commit eafc972, `callbacks_<source>.csv`).
+- T-REC-3: plain recorder with **Meet closed** (one variable). Loss gone ->
+  Meet's use of the mic is the trigger; loss remains -> system state since 21:13.
 - T-LIVE-3: models on, test-1 settings (deferred).

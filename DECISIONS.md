@@ -57,4 +57,11 @@ improvement with all three on would not show which one helped. Plan: make
 them switchable with defaults equal to the T-LIVE-1 configuration, reproduce
 the failure (T-LIVE-3), then test each on its own. Status: open. Flags now
 exist (`--asr-threads N`, `--asr-no-spin`, `--omp-passive`, `--capture-buffer-ms N`);
-with none given the program runs the T-LIVE-1 configuration.
+with none given the program runs the T-LIVE-1 configuration. Paused 2026-10-30
+22:14 (user decision) after T-LIVE-2 and T-REC-2 showed the loss without
+models; the mitigation flags stay available but are untested.
+
+**D11 - Resume on recognition/translation quality with the known mic issue
+open.** Judge ASR/MT mainly on "Remote" lines (complete audio); treat "Me"
+lines as affected by sample loss. Keep changes small; commit only verified
+improvements.
