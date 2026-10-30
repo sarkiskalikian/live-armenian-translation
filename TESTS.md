@@ -294,10 +294,42 @@ and can hurt recognition. Possible fix (not made): correct timestamps by an
 offset instead of inserting audio. Remote clips also contain exact-zero runs
 (0.1-0.17 s) in pauses: Meet's own digital silence, expected.
 
+## E2 - Beam 1 vs beam 4 on 5 call phrases (2026-10-31 01:14, laptop)
+`results/beam_check.json`, Windows, Python 3.13.14, ctranslate2 4.8.4, NLLB-600M
+int8, 4 threads. All 5 references user-confirmed (00049.31 after the 01:13
+correction). Time = median of 5 repeats after warm-up.
+
+Measured: median 203.5 ms (beam 1) vs 256.0 ms (beam 4) over 10 translations
+each; identical English in 6 of 10 (4 of 5 on corrected Armenian).
+
+English, assistant's reading (user may correct):
+
+| input | beam 1 | beam 4 |
+|---|---|---|
+| Հաճելի է, իմ անունը գարուն է (ref) | It's nice. My name is Spring. | same |
+| Ես Երեւանում, դու՞ւք (ref) | I'm coming, are you? (Yerevan lost) | same |
+| Ես Վանաձորից եմ (ref) | I'm from Vancouver. | same |
+| Ես զբաղվում եմ կլինիկական հետազոտություններ հետ (ref) | I'm in clinical trials. | same |
+| Մեր մոտ ժամը տաս տասնհինգ անց (ref) | We're about 10:15 in the morning. | It's about 10:15 in the morning. |
+| Պատելի է, ... (ASR) | It's a wall. My name is Spring. | My name is Spring. |
+| Այո Երեւանում, ... (ASR) | Yes, you are. | same |
+| Ես Վանաձորից եմ (ASR = ref) | I'm from Vancouver. | same |
+| ... զբաղում ... քինիկական ... (ASR) | I'm in the field of kinetic research. | I do kinetic research. |
+| ... ժամը տ տասնհինգ անց (ASR) | We're about 15 hours away. | We're about one and a half. |
+
+Inferred:
+- On correct Armenian, beam 1 and 4 give the same meaning on all 5; neither
+  fixes the two place-name errors (Երեւանում dropped; Վանաձոր -> Vancouver).
+  These are NLLB-600M limitations, not a beam setting.
+- With ASR errors in the input, both beams produce wrong English.
+- Speed: ~50 ms saved per short phrase; T-MT-1 (long FLEURS sentences)
+  showed p50 1.31 vs 1.67 s and p95 2.49 vs 3.54 s for -0.7 chrF.
+- 5 phrases is too few to detect small quality differences.
+
 ## Planned (2026-10-30 23:59) - run on the laptop, Windows .venv, pinned versions
 - E0 `python -m livetrans.models --verify` - pinned model hashes and runtime versions.
 - E1 done (see above).
-- E2 `tools/beam_check.py` - beam 1 vs 4 on 5 phrases, corrected Armenian and ASR output.
+- E2 done (see above).
 - E3 `tools/asr_compare.py` - CTC fp32 vs RNN-T fp32 on FLEURS (100) and confirmed
   intact call phrases; E4 RNN-T int8 only if E3 favours RNN-T.
 Sandbox runs of these scripts were functional checks only; their numbers are not results.

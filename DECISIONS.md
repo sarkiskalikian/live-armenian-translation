@@ -99,4 +99,8 @@ warm-up "minimal" vs "representative" in fresh processes. Start-up time is
 reported separately and never counted as live latency. Warm-up decided (E1):
 keep "minimal" - the first phrase is already within ~0.07 s of warm, and
 "representative" adds ~2 s start-up without a measurable gain. The
-"representative" option stays available but is not the default.
+"representative" option stays available but is not the default. Beam (E2): no
+quality difference found on the 5 call phrases with corrected Armenian;
+beam 1 is ~50 ms faster on short phrases and 20-30 % faster on long ones
+(T-MT-1). Recommended: beam 1. Not changed yet - awaiting the user's
+decision.
