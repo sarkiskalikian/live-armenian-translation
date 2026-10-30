@@ -266,6 +266,32 @@ Inferred:
 - On this laptop MT (~0.55 s at beam 4) dominates per-phrase compute;
   ASR is ~0.06-0.13 s for 3-4 s clips.
 
+## Call references for the 5 beam-check phrases (2026-10-31 00:59-01:11)
+`eval/t-live-4_refs.jsonl`, corrected by the user (native speaker) by listening
+to the saved T-LIVE-4 clips, one at a time; ambiguous words were asked about
+before confirming. Word errors of the live CTC recognition (normalised):
+
+| clip | reference (user) | live ASR | word errors |
+|---|---|---|---|
+| 00019.81_Remote | Հաճելի է, իմ անունը գարուն է։ | Պատելի է, ... | 1/5 |
+| 00049.31_Remote | Այո Երեւանում, դու՞ւք։ | (same) | 0/3 |
+| 00053.76_Me | Ես Վանաձորից եմ։ | (same) | 0/3 (MT test only) |
+| 00070.08_Remote | Ես զբաղվում եմ կլինիկական հետազոտություններ հետ։ | ... զբաղում ... քինիկական ... | 2/6 |
+| 00095.46_Remote | Մեր մոտ ժամը տաս տասնհինգ անց։ | ... տ տասնհինգ անց | 1/6 |
+
+The other 10 Remote rows are still unconfirmed. Whether «գարուն» is a name
+(would be «Գարուն») was not settled; it affects MT input, not WER.
+
+**Defect found while listening (00053.76_Me):** the user heard a cut. The clip
+contains 391 ms of exact digital zeros at 0.69 s - silence inserted by our
+aligner when it re-anchors the timeline after an unrecovered-lag event (D7),
+placed mid-speech at detection time. Real mic audio never has exact-zero runs
+(floor about -75 dB). The frames were missing anyway (frame shortfall), but
+concentrating the correction into one 0.4 s hole inside a word is our doing
+and can hurt recognition. Possible fix (not made): correct timestamps by an
+offset instead of inserting audio. Remote clips also contain exact-zero runs
+(0.1-0.17 s) in pauses: Meet's own digital silence, expected.
+
 ## Planned (2026-10-30 23:59) - run on the laptop, Windows .venv, pinned versions
 - E0 `python -m livetrans.models --verify` - pinned model hashes and runtime versions.
 - E1 done (see above).
