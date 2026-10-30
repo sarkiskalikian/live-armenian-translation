@@ -149,6 +149,11 @@ def main() -> int:
             },
         }
         (out / "session.json").write_text(json.dumps(session, indent=2, ensure_ascii=False), encoding="utf-8")
+        for name, s in streams.items():
+            s.save_callback_log(out / f"callbacks_{name}.csv", t0)
+            ratio = s.aligner.delivered_ratio(t_end)
+            print(f"{name:8}: delivered {'n/a' if ratio is None else f'{ratio:.1%}'} of expected audio "
+                  f"({s.aligner.stats.frames} frames, {len(s.callback_log)} callbacks)")
         print(f"\nSaved to {out}\nNext: python tools/m0_check.py {out}")
         return 1 if errors else 0
 

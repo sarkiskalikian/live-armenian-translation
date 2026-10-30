@@ -207,6 +207,9 @@ class CaptureStream:
         self._worker = threading.Thread(target=self._drain, daemon=True,
                                          name=f"drain-{device.kind}")
         self.last_callback = None
+        # every callback as (arrival perf_counter, frames, status flags): cheap list append,
+        # used to tell dropped packets apart from a slow device clock (TESTS.md T-REC-2)
+        self.callback_log: list[tuple[float, int, int]] = []
         self.stream = None
         self.error: str | None = None
         self._fpb = max(int(device.rate * buffer_s), 64)
@@ -214,6 +217,7 @@ class CaptureStream:
     def _callback(self, in_data, frame_count, time_info, status):
         t = time.perf_counter()
         self.last_callback = t
+        self.callback_log.append((t, frame_count, status))
         self._q.put((t, in_data, status))
         return (None, self._pyaudio.paContinue)
 
@@ -241,6 +245,12 @@ class CaptureStream:
             stream_callback=self._callback,
         )
         self._worker.start()
+
+    def save_callback_log(self, path, t0: float) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("t_s,frames,status\n")
+            for t, n, st in self.callback_log:
+                f.write(f"{t - t0:.6f},{n},{st}\n")
 
     def is_active(self) -> bool:
         try:
