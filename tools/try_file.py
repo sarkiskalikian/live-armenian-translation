@@ -34,7 +34,7 @@ def main() -> int:
     ap.add_argument("--start", type=float, default=0.0)
     ap.add_argument("--end", type=float, default=None)
     ap.add_argument("--vad-only", action="store_true", help="only show the segments, skip the models")
-    ap.add_argument("--beam", type=int, default=4)
+    ap.add_argument("--beam", type=int, default=1)   # same default as the live program (E2)
     args = ap.parse_args()
 
     pcm, rate = read_wav(args.wav)

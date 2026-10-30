@@ -38,7 +38,8 @@ def main() -> int:
     ap.add_argument("--omp-passive", action="store_true", help="set OMP_WAIT_POLICY=PASSIVE for CTranslate2")
     ap.add_argument("--capture-buffer-ms", type=int, default=20, help="PortAudio buffer per callback")
     ap.add_argument("--mt-threads", type=int, default=4)
-    ap.add_argument("--beam", type=int, default=4, help="translation beam size (1 = fastest)")
+    ap.add_argument("--beam", type=int, default=1,
+                    help="translation beam size (default 1, chosen in E2; 4 = previous default)")
     ap.add_argument("--min-silence", type=float, default=0.5, help="seconds of silence that end a phrase")
     ap.add_argument("--max-speech", type=float, default=10.0, help="force a cut after this many seconds")
     ap.add_argument("--save-audio", action="store_true")
