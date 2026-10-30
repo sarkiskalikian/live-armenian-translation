@@ -42,6 +42,8 @@ def main() -> int:
     ap.add_argument("--min-silence", type=float, default=0.5, help="seconds of silence that end a phrase")
     ap.add_argument("--max-speech", type=float, default=10.0, help="force a cut after this many seconds")
     ap.add_argument("--save-audio", action="store_true")
+    ap.add_argument("--warmup", choices=("minimal", "representative"), default="minimal",
+                    help="model warm-up before listening (start-up cost, not live latency)")
     ap.add_argument("--no-models", action="store_true",
                     help="diagnostic: capture + phrase cutting only (no ASR/MT), to isolate capture problems")
     args = ap.parse_args()
@@ -75,6 +77,7 @@ def main() -> int:
 
         vad = SileroVad(models.vad_model_path())
         asr = mt = None
+        startup = {}
         if args.no_models:
             print("DIAGNOSTIC MODE: --no-models (no recognition or translation)")
         else:
@@ -84,10 +87,12 @@ def main() -> int:
             from livetrans.translate import Translator
             asr = Transcriber(models.ASR_DIR, threads=args.asr_threads, spin=not args.asr_no_spin)
             mt = Translator(models.MT_DIR, threads=args.mt_threads, beam_size=args.beam)
-            # warm-up so the first real phrase is not slowed by lazy initialisation
-            import numpy as np
-            mt.translate(asr.transcribe(np.zeros(16_000, dtype=np.float32)) or "Բարև։")
-            print(f"Models ready in {time.perf_counter() - t:.1f} s")
+            startup["load_s"] = round(time.perf_counter() - t, 2)
+            from livetrans.warmup import warm_up
+            startup["warmup_s"] = round(warm_up(asr, mt, args.warmup), 2)
+            startup["warmup_mode"] = args.warmup
+            print(f"Start-up (not part of live latency): models loaded in {startup['load_s']:.1f} s, "
+                  f"warm-up '{args.warmup}' {startup['warmup_s']:.1f} s")
 
         log_dir = Path("logs") / datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -166,6 +171,7 @@ def main() -> int:
                 problems.append(f"{label}: {st.overflows} input overflows reported by PortAudio")
         summary = summarize(worker.stats)
         summary["capture"] = capture
+        summary["startup"] = startup
         summary["capture_problems"] = problems
         summary["settings"] = vars(args)
         (log_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
