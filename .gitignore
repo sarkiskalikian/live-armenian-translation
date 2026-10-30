@@ -1,0 +1,16 @@
+# never commit audio, models or secrets
+recordings/
+logs/
+*.wav
+*.flac
+*.mp3
+models/
+data/
+*.onnx
+*.bin
+*.safetensors
+.env
+# python
+.venv/
+__pycache__/
+*.pyc

@@ -1,0 +1,8 @@
+# Live pipeline (CPU only; no PyTorch)
+PyAudioWPatch>=0.2.12.6   # PortAudio fork with WASAPI loopback (Windows system-audio capture)
+numpy>=1.24
+soxr>=0.5                 # resampling 48 kHz device audio -> 16 kHz model audio
+onnx-asr[cpu,hub]>=0.12   # FastConformer ASR + Silero VAD download (pulls onnxruntime, huggingface_hub)
+ctranslate2>=4.5          # int8 NLLB translation
+sentencepiece>=0.2        # NLLB tokenizer
+# Optional, only for tools/m1_bench_*.py: jiwer sacrebleu psutil
