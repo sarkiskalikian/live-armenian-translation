@@ -25,6 +25,14 @@ from livetrans.segmenter import Segment
 
 LABELS = {"mic": "Me", "loopback": "Remote"}
 ARMENIAN_LETTER = re.compile("[\u0531-\u0556\u0561-\u0587]")
+# NLLB invents whole sentences for one-letter input ("Հ։" -> "A: What are you talking
+# about?", T-LIVE-4), so text with fewer Armenian letters than this is shown untranslated.
+MIN_LETTERS_TO_TRANSLATE = 2
+
+
+def armenian_letters(text: str) -> int:
+    """Number of Armenian alphabet letters (Ա-Ֆ, ա-և); punctuation and spaces don't count."""
+    return len(ARMENIAN_LETTER.findall(text))
 BUDGET_S = 5.0
 
 
@@ -87,9 +95,8 @@ class Worker(threading.Thread):
         else:
             hy = self.asr.transcribe(seg.audio)
         t_asr = time.perf_counter()
-        # NLLB invents a sentence for input with no words (e.g. a lone "֊"), so skip it
-        has_words = bool(ARMENIAN_LETTER.search(hy))
-        en = self.mt.translate(hy) if (has_words and self.mt is not None) else ""
+        translatable = armenian_letters(hy) >= MIN_LETTERS_TO_TRANSLATE
+        en = self.mt.translate(hy) if (translatable and self.mt is not None) else ""
         t_mt = time.perf_counter()
 
         speech_end_wall = self.t0 + seg.end_s
@@ -102,9 +109,10 @@ class Worker(threading.Thread):
         timing = (f"latency {total:.1f}s = vad {parts['vad']:.1f} + queue {parts['queue']:.1f} "
                   f"+ asr {parts['asr']:.1f} + mt {parts['mt']:.1f}  ({dur:.1f}s audio"
                   f"{', cut at max length' if seg.forced else ''}){flag}")
-        if not has_words and self.asr is not None:
+        if not translatable and self.asr is not None:
             self.stats.empty_asr += 1
-            self.say(f"[{hms(seg.start_s)}] {label}   (no words recognised{': ' + hy if hy else ''}; {timing})")
+            self.say(f"[{hms(seg.start_s)}] {label}   (not translated: fewer than {MIN_LETTERS_TO_TRANSLATE} "
+                     f"Armenian letters{' in ' + repr(hy) if hy else ''}; {timing})")
         else:
             self.say(f"[{hms(seg.start_s)}] {label}\n  HY: {hy}\n  EN: {en}\n  .. {timing}")
 
@@ -144,7 +152,8 @@ def summarize(stats: Stats) -> dict:
 
 def print_summary(summary: dict, capture_problems: list[str]) -> None:
     print("\n=========== session summary ===========")
-    print(f"segments: {summary['segments']}  (no words recognised: {summary['empty_asr']}), "
+    print(f"segments: {summary['segments']}  (not translated, < {MIN_LETTERS_TO_TRANSLATE} letters: "
+          f"{summary['empty_asr']}), "
           f"max queue depth: {summary['max_queue_depth']}")
     for label, s in summary["by_source"].items():
         if not s["segments"]:

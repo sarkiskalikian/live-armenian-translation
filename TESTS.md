@@ -217,6 +217,23 @@ Inferred: recognition is the largest error source; MT adds errors on short
 colloquial phrases and names; one-letter outputs are a separate, cheap-to-fix
 defect. "Me" errors may be partly caused by the mic sample loss.
 
+## T-OFF-1 - Minimum-letters rule replayed on T-LIVE-4 output (offline)
+Change: translate only if the recognised text has >= 2 Armenian alphabet
+letters (Ա-Ֆ, ա-և; punctuation/spaces not counted); otherwise print the
+Armenian with "(not translated ...)". Previously only text with 0 letters
+was skipped.
+
+Measured on the 36 recognised strings of `logs/20261030-221541`:
+- 3 lines change: "Հ։" (Remote, twice) and "Ս։" (Me), previously translated
+  as "A: What are you talking about?" / "Q. What is this?".
+- 33 lines unchanged. Still translated and still wrong: "Հովհ." (4 letters)
+  -> "John: How did you know?", "Հահ։" (3) -> "Oh, my God." A letter count
+  cannot catch these. "Հ է։" (2) -> "That's right." is kept.
+- Earlier estimate of "~7" hallucination lines fixed by this rule was an
+  overstatement; the rule addresses 3.
+
+Not yet observed in a live run.
+
 ## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)
 Paused by user decision to resume work on recognition/translation output.
 Status: the mic loses ~7-16 % of its samples in every test since 21:13; cause
