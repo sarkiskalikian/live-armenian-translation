@@ -106,7 +106,44 @@ Accuracy notes (same log): when the Armenian was right the English was right
 live?"). Bad lines started with bad recognition ("Հեռեւ ձեզ, ո՞նցեքք" for
 "Բարև ձեզ, ո՞նց եք" -> "Away from you"; a lone "֊։" -> invented "What is it?").
 
+## T-LIVE-2 - Models off, T-LIVE-1 settings (2026-10-30 21:54) - mic loss REPRODUCED
+`logs/20261030-215404`, commit b72c767, `--no-models` (capture + resampling +
+Silero VAD only; no ASR/MT loaded), capture buffer 20 ms, same Meet call setup.
+Planned 2 min; the run lasted **15.6 s** (user stopped it), so ratios are coarse.
+
+Measured (`summary.json` -> `capture`; sample counts are now logged):
+- Me: delivered_ratio 0.840 (frames received / frames expected since the
+  stream's first sample); 3 confirmed loss events totalling 1.57 s (live
+  warnings at ~10 s and ~12 s, about 0.5 s each); 6 late-but-recovered events;
+  max lateness 0.556 s; 0 overflow flags.
+- Remote: delivered_ratio 0.993; 0 loss events; max lateness 0.003 s.
+- 4 phrases (3 Me, 1 Remote), latency 0.54-0.96 s (VAD wait only).
+
+Inferred:
+- The mic loses audio **without** any ASR/MT CPU load, so H1 (model CPU
+  starvation) cannot be the sole cause. Whether model load makes it worse is
+  unknown. The ASR/OMP mitigations from D10 are therefore not the first lever.
+- The loss comes in ~0.5 s blocks rather than a steady trickle.
+- 1.57 s confirmed lost of ~14.7 s explains ~11 %; the rest of the 16 % gap is
+  lateness still unconfirmed when the run stopped (loss is only confirmed
+  after 1 s without recovery).
+
+Contrast with T-M0-1: same mic, same Meet setup with remote speech, 20 ms
+buffer, same CaptureStream class -> 100 % delivered over 60 s. Difference: the
+recorder only writes WAV per buffer; the live program also resamples (soxr)
+and runs Silero VAD per buffer in the drain thread. T-M0-1 ran with the older
+aligner, but frame counts are independent of the aligner.
+
+Hypotheses now (unconfirmed):
+- H2 Python-side: work in the drain threads (GIL contention) delays the
+  PyAudio callback of the mic until WASAPI drops data.
+- H3 environment: Intel Smart Sound driver / Meet sharing the mic; a
+  condition that differed from the T-M0-1 session (time-varying).
+- H1 model CPU load: may still contribute; not the sole cause.
+
 ## Pending
-- T-LIVE-2: models off (`--no-models`), test-1 settings. Separates H1 from H2/H3.
-- T-LIVE-3: models on, test-1 settings. Checks that the failure reproduces.
-- Then one mitigation at a time (see D10).
+- T-REC-2: plain recorder (`tools/m0_record.py`) for 60-120 s under the same
+  call conditions. Loss there -> H3 (environment/driver); no loss -> the live
+  pipeline's per-buffer processing (H2).
+- T-LIVE-3: models on, test-1 settings (originally planned; lower priority
+  since T-LIVE-2).
