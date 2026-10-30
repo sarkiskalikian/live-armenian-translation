@@ -273,7 +273,7 @@ before confirming. Word errors of the live CTC recognition (normalised):
 
 | clip | reference (user) | live ASR | word errors |
 |---|---|---|---|
-| 00019.81_Remote | Հաճելի է, իմ անունը գարուն է։ | Պատելի է, ... | 1/5 |
+| 00019.81_Remote | Հաճելի է, իմ անունը գարուն է։ | Պատելի է, ... | 1/6 |
 | 00049.31_Remote | Այո Երեւանում, դու՞ւք։ | (same) | 0/3 |
 | 00053.76_Me | Ես Վանաձորից եմ։ | (same) | 0/3 (MT test only) |
 | 00070.08_Remote | Ես զբաղվում եմ կլինիկական հետազոտություններ հետ։ | ... զբաղում ... քինիկական ... | 2/6 |
