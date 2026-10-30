@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import subprocess
 import sys
@@ -24,6 +25,15 @@ sys.path.insert(0, str(ROOT))
 DEFAULT_CLIPS = ["logs/20261030-221541/00019.81_Remote.wav",
                  "logs/20261030-221541/00037.95_Remote.wav",
                  "logs/20261030-221541/00070.08_Remote.wav"]
+
+
+def utf8_console() -> None:
+    """Windows consoles/pipes default to cp1252, which cannot encode Armenian."""
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
 
 
 def child(mode: str, clips: list[str], beam: int) -> dict:
@@ -62,6 +72,7 @@ def main() -> int:
     ap.add_argument("--clips", nargs=3, default=DEFAULT_CLIPS)
     ap.add_argument("--child", choices=("minimal", "representative"))
     args = ap.parse_args()
+    utf8_console()
     if args.child:
         print(json.dumps(child(args.child, args.clips, args.beam), ensure_ascii=False))
         return 0
@@ -70,7 +81,8 @@ def main() -> int:
     for i in range(args.runs):
         for mode in ("minimal", "representative"):          # alternate so drift affects both
             out = subprocess.run([sys.executable, __file__, "--child", mode, "--beam", str(args.beam),
-                                  "--clips", *args.clips], capture_output=True, text=True, encoding="utf-8")
+                                  "--clips", *args.clips], capture_output=True, text=True, encoding="utf-8",
+                                 env={**os.environ, "PYTHONIOENCODING": "utf-8"})
             if out.returncode != 0:
                 print(out.stderr[-2000:])
                 return 1

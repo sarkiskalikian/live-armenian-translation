@@ -27,6 +27,15 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from m1_common import normalize_hy  # noqa: E402
 
+
+def utf8_console() -> None:
+    """Windows consoles/pipes default to cp1252, which cannot encode Armenian."""
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
 SETS = {"fleurs": (ROOT / "data" / "fleurs_hy.jsonl", ROOT / "data"),
         "calls": (ROOT / "eval" / "t-live-4_refs.jsonl", ROOT)}
 
@@ -49,6 +58,7 @@ def main() -> int:
     ap.add_argument("--set", choices=sorted(SETS), default="fleurs")
     ap.add_argument("--limit", type=int)
     args = ap.parse_args()
+    utf8_console()
     if args.model == "ctc" and args.quant != "none":
         ap.error("the CTC export has no int8 variant")
 

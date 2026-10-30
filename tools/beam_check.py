@@ -20,7 +20,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+def utf8_console() -> None:
+    """Windows consoles/pipes default to cp1252, which cannot encode Armenian."""
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main() -> int:
+    utf8_console()
     from livetrans import models
     from livetrans.translate import Translator
 
