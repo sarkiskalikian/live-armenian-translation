@@ -65,3 +65,35 @@ models; the mitigation flags stay available but are untested.
 open.** Judge ASR/MT mainly on "Remote" lines (complete audio); treat "Me"
 lines as affected by the frame shortfall. Keep changes small; commit only verified
 improvements.
+
+**D12 - The minimum-letters rule is a translation guard, not a quality score.**
+Text with fewer than 2 Armenian letters is not sent to NLLB because NLLB
+invents sentences for it (T-OFF-1). It says nothing about how good the
+recognition was. Valid short replies stay translatable: «այո» (3 letters),
+«ոչ», «հա», «չէ» (2 each).
+
+**D13 - Pin everything that a result depends on.** Model files are pinned by
+Hugging Face commit and sha256, packages by exact version
+(`python -m livetrans.models --verify`). Reported numbers come from the
+laptop's Windows environment; the Linux sandbox (onnxruntime 1.23.2,
+2 vCPUs) is used only to check that scripts run.
+
+**D14 - Recognition experiment: CTC vs RNN-T head of the same model (open).**
+Motivation: Karpov et al., Interspeech 2025, Section 3, describe the NVIDIA
+model as a 114M-parameter hybrid FastConformer trained jointly with an RNN-T
+and a CTC decoder, and state that the RNN-T head generally does better than
+CTC because it uses more context. Their Tables 1-2 report WER for the RNN-T
+head only (all data: 9.90 % MCV, 12.32 % FLEURS). Our current export uses
+the CTC head; the Vana-Labs export uses the RNN-T head of the same weights.
+This is motivation, not proof: the paper has no CTC-head numbers for this
+model, and neither export has been measured on our audio.
+Plan, one variable at a time: (1) CTC fp32 vs RNN-T fp32 on the same intact
+clips (100 FLEURS test clips + user-corrected Remote call phrases), same
+preprocessing (onnx-asr's built-in 80-band NeMo features), same runtime;
+(2) only if RNN-T fp32 is better, RNN-T int8 vs RNN-T fp32. The live default
+changes only after a verified improvement.
+
+**D15 - Translation beam and warm-up are decided by measurement (open).**
+Beam 1 vs 4 on five call phrases (corrected Armenian and ASR output);
+warm-up "minimal" vs "representative" in fresh processes. Start-up time is
+reported separately and never counted as live latency.

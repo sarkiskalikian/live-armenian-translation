@@ -17,7 +17,7 @@ SAMPLE_RATE = 16_000
 
 class Transcriber:
     def __init__(self, model_dir: str | Path = "models/asr-hy-fastconformer", threads: int | None = None,
-                 spin: bool = True):
+                 spin: bool = True, model_type: str | None = None, quantization: str | None = None):
         """threads=None and spin=True reproduce ONNX Runtime's defaults (all cores,
         busy-waiting between runs), i.e. the T-LIVE-1 configuration. Capping threads
         and disabling spinning are candidate mitigations for the mic frame shortfall (D10)."""
@@ -32,8 +32,11 @@ class Transcriber:
             if not spin:
                 opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
                 opts.add_session_config_entry("session.inter_op.allow_spinning", "0")
-        # onnx-asr reads the model from model_dir, downloading it there first if missing
-        self.model = onnx_asr.load_model(ASR_REPO, path=Path(model_dir), sess_options=opts,
+        # Default: the OpenVoiceOS CTC export, identified by its repo id (onnx-asr reads
+        # model_dir). model_type="nemo-conformer-rnnt" loads the Vana-Labs RNN-T export
+        # from model_dir instead; quantization="int8" picks its *.int8.onnx files.
+        self.model = onnx_asr.load_model(model_type or ASR_REPO, path=Path(model_dir),
+                                         quantization=quantization, sess_options=opts,
                                          providers=["CPUExecutionProvider"])
 
     def transcribe(self, audio: np.ndarray) -> str:

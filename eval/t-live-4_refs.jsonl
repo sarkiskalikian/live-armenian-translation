@@ -1,0 +1,15 @@
+{"wav": "logs/20261030-221541/00005.60_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "֊ավ ձեզ լավ, դո՞ք ոնց եք։", "ref_hy": "֊ավ ձեզ լավ, դո՞ք ոնց եք։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00019.81_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Պատելի է, իմ անունը գարուն է։", "ref_hy": "Պատելի է, իմ անունը գարուն է։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00037.95_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Ես էլ այս պահ նույն Հայաստան եմ ապրում։", "ref_hy": "Ես էլ այս պահ նույն Հայաստան եմ ապրում։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00049.31_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Այո Երեւանում, դու՞ւք։", "ref_hy": "Այո Երեւանում, դու՞ւք։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00053.76_Me.wav", "source": "mic", "intact": false, "asr_hy": "Ես Վանաձորից եմ։", "ref_hy": "Ես Վանաձորից եմ։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00057.15_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հովհ.", "ref_hy": "Հովհ.", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00065.44_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ։", "ref_hy": "Հ։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00068.32_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ։", "ref_hy": "Հ։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00070.08_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Ես զբաղում եմ քինիկական հետազոտություններ հետ։", "ref_hy": "Ես զբաղում եմ քինիկական հետազոտություններ հետ։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00075.71_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ է։", "ref_hy": "Հ է։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00082.56_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Լավ է, ն է, ոչինչ։", "ref_hy": "Լավ է, ն է, ոչինչ։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00095.46_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Մեր մոտ ժամը տ տասնհինգ անց։", "ref_hy": "Մեր մոտ ժամը տ տասնհինգ անց։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00099.49_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Ս մոտ նույնն է։", "ref_hy": "Ս մոտ նույնն է։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00112.67_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Նույնինին, ստտեսչո, լավավոր, բարի երեկո։", "ref_hy": "Նույնինին, ստտեսչո, լավավոր, բարի երեկո։", "ref_status": "unconfirmed", "beam_check": false}
+{"wav": "logs/20261030-221541/00120.03_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հահ։", "ref_hy": "Հահ։", "ref_status": "unconfirmed", "beam_check": false}

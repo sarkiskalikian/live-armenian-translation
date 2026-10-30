@@ -241,6 +241,14 @@ Measured on the 36 recognised strings of `logs/20261030-221541`:
 
 Not yet observed in a live run.
 
+## Planned (2026-10-30 23:59) - run on the laptop, Windows .venv, pinned versions
+- E0 `python -m livetrans.models --verify` - pinned model hashes and runtime versions.
+- E1 `tools/warmup_check.py` - first-phrase cold start, minimal vs representative warm-up.
+- E2 `tools/beam_check.py` - beam 1 vs 4 on 5 phrases, corrected Armenian and ASR output.
+- E3 `tools/asr_compare.py` - CTC fp32 vs RNN-T fp32 on FLEURS (100) and confirmed
+  intact call phrases; E4 RNN-T int8 only if E3 favours RNN-T.
+Sandbox runs of these scripts were functional checks only; their numbers are not results.
+
 ## Mic capture investigation - PAUSED, UNRESOLVED (2026-10-30 22:14)
 Paused by user decision to resume work on recognition/translation output.
 Status: the mic delivers ~7-16 % fewer frames than expected in every test since 21:13; cause
