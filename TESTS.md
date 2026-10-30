@@ -274,12 +274,14 @@ before confirming. Word errors of the live CTC recognition (normalised):
 | clip | reference (user) | live ASR | word errors |
 |---|---|---|---|
 | 00019.81_Remote | Հաճելի է, իմ անունը գարուն է։ | Պատելի է, ... | 1/6 |
-| 00049.31_Remote | Այո Երեւանում, դու՞ւք։ | (same) | 0/3 |
+| 00049.31_Remote | Ես Երեւանում, դու՞ւք։ | Այո Երեւանում, ... | 1/3 |
 | 00053.76_Me | Ես Վանաձորից եմ։ | (same) | 0/3 (MT test only) |
 | 00070.08_Remote | Ես զբաղվում եմ կլինիկական հետազոտություններ հետ։ | ... զբաղում ... քինիկական ... | 2/6 |
 | 00095.46_Remote | Մեր մոտ ժամը տաս տասնհինգ անց։ | ... տ տասնհինգ անց | 1/6 |
 
-The other 10 Remote rows are still unconfirmed. Whether «գարուն» is a name
+00049.31 was first confirmed as recognised (01:02), then corrected by the
+user at 01:13: the first word is «Ես», not «Այո». The other 10 Remote rows
+are still unconfirmed. Whether «գարուն» is a name
 (would be «Գարուն») was not settled; it affects MT input, not WER.
 
 **Defect found while listening (00053.76_Me):** the user heard a cut. The clip
