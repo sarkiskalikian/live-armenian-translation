@@ -46,10 +46,8 @@ class Translator:
 
 
 def download(model_dir: str | Path = "models/mt-nllb-600m-int8") -> Path:
-    """Fetch the CT2 model and the official SentencePiece model into model_dir."""
-    from huggingface_hub import hf_hub_download, snapshot_download
+    """Fetch the CT2 model and the official SentencePiece model at their pinned revisions."""
+    from livetrans.models import MT_DIR, fetch
 
-    model_dir = Path(model_dir)
-    snapshot_download(NLLB_CT2_REPO, local_dir=model_dir)
-    hf_hub_download(NLLB_SPM_REPO, SPM_FILE, local_dir=model_dir)
-    return model_dir
+    fetch(["mt", "mt-spm"])
+    return MT_DIR
