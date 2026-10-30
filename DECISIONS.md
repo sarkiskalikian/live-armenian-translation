@@ -1,112 +1,124 @@
 # Decisions
 
-Each entry: what was decided, why, and its status. "Unverified" means it has
-not yet been confirmed on the target laptop.
+Each entry: **decision, why, evidence, status, commit**. Status is one of
+*active*, *open*, *superseded* (replaced text kept, struck through) or
+*proposed, not tested*. Evidence IDs refer to TESTS.md.
 
-**D1 - System audio via WASAPI loopback (PyAudioWPatch).** Windows exposes a
-loopback twin of every output device, so no virtual cable (BlackHole
-equivalent) is needed and the user still hears the call. Verified in T-M0-1.
+## Current pipeline (2026-10-31)
 
-**D2 - Microphone = laptop array `[14]`, not the Buds' mic.** Opening the
-Buds' "Headset" mic switches them to the Bluetooth hands-free profile; call
-audio then moves to a different endpoint and loopback `[16]` would go
-silent. In-ear Buds also leak little sound into the laptop mic (T-M0-1).
+```
+mic [14] ─┐                                                       ┌─ "Me"
+          ├─ WASAPI capture ─ 16 kHz mono ─ Silero VAD phrases ─ FastConformer-hy CTC ─ Armenian text
+loopback ─┘   (PyAudioWPatch)    (soxr)      (0.5 s silence)      (ONNX, fp32)            │
+ [16]                                                                                     ▼
+                                       terminal: [time] label / HY / EN / latency ◄─ NLLB-200 600M int8, beam 1
+```
 
-**D3 - ASR: NVIDIA FastConformer-Hybrid Large (hy), ONNX CTC export via
-onnx-asr.** Best open model on ArmBench-ASR v1.0 (combined WER 19.9 vs
-Whisper-large-v3 65.1), 115M params, runs without NeMo/PyTorch. Known risks:
-~61 % WER on conversational movie audio in that benchmark; trained on read
-Eastern Armenian; CTC head (published numbers are RNN-T). Not benchmarked
-locally (D9).
+Audio -> FastConformer (CTC head) -> Armenian text -> NLLB -> English text.
+Labels: "Me" (mic) and "Remote" (loopback); per-speaker remote labels are next (D19).
 
-**D4 - MT: NLLB-200 distilled 600M, int8 CTranslate2 (third-party
-conversion), Meta's own SentencePiece model.** Fits in ~1 GB RAM; T-MT-1:
-chrF 61-62 on clean FLEURS input. Licence CC-BY-NC (fine for this
-challenge). Beam 4 is the current default; beam 1 is nearly as good and
-faster (T-MT-1) - not changed yet.
+---
 
-**D5 - Phrase segmentation: Silero VAD run frame by frame (32 ms) with its
-state carried**, 0.5 s silence ends a phrase, 10 s maximum. Latency is
-measured from the end of the last speech frame. Verified offline (T-VAD-1).
+**D1 - System audio via WASAPI loopback (PyAudioWPatch).**
+Why: Windows exposes a loopback twin of each output device, so no virtual
+cable is needed and the user still hears the call. Evidence: T-M0-1.
+Status: active. Commit: e7817a9.
 
-**D6 - One worker thread, FIFO across both sources.** Models never compete
-with each other for CPU; overlapping speech shows up as measurable queue
-wait instead of hidden slowdowns. Labels are "Me" / "Remote" for now;
-per-speaker labels come later.
+**D2 - Microphone = laptop array `[14]`, not the Buds' mic.**
+Why: opening the Buds' "Headset" mic switches them to the hands-free profile,
+moving call audio off loopback `[16]`; in-ear Buds leak little into the laptop
+mic. Evidence: T-M0-1. Status: active.
 
-**D7 - Sample-clock timing with a shared t0.** A stream's start time is the
-earliest arrival in a 0.5 s warm-up window (a late first buffer used to shift
-the whole stream: T-M0-1's +0.10 s). Late buffers are never padded with
-zeros; zeros are inserted only for idle loopback, or when lateness has not
-recovered for 1 s (unrecovered lag), reported as a frame shortfall of unknown cause.
-Verified with stub tests only.
+**D3 - ASR: NVIDIA FastConformer-Hybrid Large (hy), CTC head, OpenVoiceOS ONNX
+export (fp32) via onnx-asr.**
+Why: best open model on ArmBench-ASR v1.0 (combined WER 19.9 vs
+Whisper-large-v3 65.1), 115M params, no NeMo/PyTorch. Evidence: E3 - FLEURS
+WER 11.92 % (95 % CI 9.75-14.22), CER 5.00 %, 0.145 s per 11.7 s clip on
+the laptop. ~~"Not benchmarked locally"~~ superseded by E3. Known risks:
+conversational audio (ArmBench movies ~61 % WER; our 4 call clips 23.8 %),
+read Eastern Armenian training data, own-voice accent untested.
+Status: active, confirmed by the user 2026-10-31. Commit: pinned in 270fea2.
 
-**D8 - Errors are reported, not hidden.** Lines over 5 s are flagged; frame
-shortfalls, overflows, stalled devices and processing exceptions print `!!` lines
-live and are listed in the session summary. Wordless ASR output is not sent
-to MT (NLLB invents sentences for it).
+**D4 - MT: NLLB-200 distilled 600M, int8 CTranslate2 (third-party conversion,
+pinned), Meta's SentencePiece model.**
+Why: ~1 GB RAM, chrF 61-62 on clean FLEURS (T-MT-1). Licence CC-BY-NC (fine
+for this challenge). ~~"Beam 4 is the current default"~~ superseded by D15
+(beam 1). Known limitation: place names (E2: «Երեւանում» dropped,
+«Վանաձոր» -> "Vancouver"). Status: active. Commit: pinned in 270fea2.
 
-**D9 - Skip the 100-clip ASR benchmark and own-voice reading test** (user
-decision, 2026-10-30): prioritise an end-to-end walking skeleton. Cost: no
-local WER number; accent risk unmeasured.
+**D5 - Phrase segmentation: Silero VAD frame by frame (32 ms), state carried;
+0.5 s silence ends a phrase; 10 s maximum.** Latency is measured from the end
+of the last speech frame. Evidence: T-VAD-1 (sandbox). Status: active;
+not re-checked in Windows with the pinned Silero file.
 
-**D10 - Debug the microphone frame shortfall one variable at a time.** The baseline
-commit already contains three mitigations applied together (ASR thread cap
-+ no spinning, `OMP_WAIT_POLICY=PASSIVE`, capture buffer 20 -> 50 ms). An
-improvement with all three on would not show which one helped. Plan: make
-them switchable with defaults equal to the T-LIVE-1 configuration, reproduce
-the failure (T-LIVE-3), then test each on its own. Status: open. Flags now
-exist (`--asr-threads N`, `--asr-no-spin`, `--omp-passive`, `--capture-buffer-ms N`);
-with none given the program runs the T-LIVE-1 configuration. Paused 2026-10-30
-22:14 (user decision) after T-LIVE-2 and T-REC-2 showed the shortfall without
-models; the mitigation flags stay available but are untested.
+**D6 - One worker thread, FIFO across both sources.** Why: models never
+compete for CPU; overlap shows up as measured queue wait. Status: active.
 
-**D11 - Resume on recognition/translation quality with the known mic issue
-open.** Judge ASR/MT mainly on "Remote" lines (complete audio); treat "Me"
-lines as affected by the frame shortfall. Keep changes small; commit only verified
-improvements.
+**D7 - Sample-clock timing with a shared t0.** Stream start = earliest arrival
+in a 0.5 s warm-up window; late buffers are never padded; zeros are inserted
+for idle loopback, or when lateness has not recovered for 1 s (unrecovered
+lag). Evidence: T-STUB. Status: active, **with a known defect**: the
+re-anchoring inserts the whole correction as one hole at detection time,
+which can fall inside a word (391 ms in `00053.76_Me.wav`). Proposed fix,
+not made: offset timestamps instead of inserting audio.
 
-**D12 - The minimum-letters rule is a translation guard, not a quality score.**
-Text with fewer than 2 Armenian letters is not sent to NLLB because NLLB
-invents sentences for it (T-OFF-1). It says nothing about how good the
-recognition was. Valid short replies stay translatable: «այո» (3 letters),
-«ոչ», «հա», «չէ» (2 each).
+**D8 - Errors are reported, not hidden.** Lines over 5 s, frame shortfalls,
+PortAudio overflows, stalled devices and exceptions are printed live and
+listed in the summary. Status: active. Commits: 8733145 (wording).
 
-**D13 - Pin everything that a result depends on.** Model files are pinned by
-Hugging Face commit and sha256, packages by exact version
-(`python -m livetrans.models --verify`). Reported numbers come from the
-laptop's Windows environment; the Linux sandbox (onnxruntime 1.23.2,
-2 vCPUs) is used only to check that scripts run.
+**D9 - Skip the 100-clip ASR benchmark and own-voice reading test**
+(user, 2026-10-30), to build the walking skeleton first.
+Status: ~~ASR benchmark skipped~~ superseded by E3 (FLEURS 100 clips run).
+Own-voice test: still not run.
 
-**D14 - Recognition experiment: CTC vs RNN-T head of the same model (open).**
-Motivation: Karpov et al., Interspeech 2025, Section 3, describe the NVIDIA
-model as a 114M-parameter hybrid FastConformer trained jointly with an RNN-T
-and a CTC decoder, and state that the RNN-T head generally does better than
-CTC because it uses more context. Their Tables 1-2 report WER for the RNN-T
-head only (all data: 9.90 % MCV, 12.32 % FLEURS). Our current export uses
-the CTC head; the Vana-Labs export uses the RNN-T head of the same weights.
-This is motivation, not proof: the paper has no CTC-head numbers for this
-model, and neither export has been measured on our audio.
-Plan, one variable at a time: (1) CTC fp32 vs RNN-T fp32 on the same intact
-clips (100 FLEURS test clips + user-corrected Remote call phrases), same
-preprocessing (onnx-asr's built-in 80-band NeMo features), same runtime;
-(2) only if RNN-T fp32 is better, RNN-T int8 vs RNN-T fp32. The live default
-changes only after a verified improvement. Outcome (E3): RNN-T fp32 had 0.52 points lower
-WER on 100 FLEURS clips (11.40 vs 11.92 %), but the 95 % CI of the difference
-includes zero (-1.28 .. +0.26) and it is ~5x slower per clip; on 4 call clips
-it was not better. Decision: keep the CTC export as the live default; do not
-run the int8 step (its precondition was not met). The RNN-T export stays
-registered and pinned (ec92cef) for a later comparison on more call audio,
-which is the domain that matters and where we have only 4 confirmed clips.
+**D10 - Debug the mic frame shortfall one variable at a time.** Three
+mitigations (ASR thread cap / no spinning, OMP passive, 50 ms buffer) were
+made switchable, default = T-LIVE-1 configuration (b72c767). T-LIVE-2 and
+T-REC-2 then showed the shortfall without models or pipeline work.
+Status: paused, unresolved (user, 2026-10-30 22:14); flags exist, untested.
 
-**D15 - Translation beam and warm-up are decided by measurement (open).**
-Beam 1 vs 4 on five call phrases (corrected Armenian and ASR output);
-warm-up "minimal" vs "representative" in fresh processes. Start-up time is
-reported separately and never counted as live latency. Warm-up decided (E1):
-keep "minimal" - the first phrase is already within ~0.07 s of warm, and
-"representative" adds ~2 s start-up without a measurable gain. The
-"representative" option stays available but is not the default. Beam (E2): no
-quality difference found on the 5 call phrases with corrected Armenian;
-beam 1 is ~50 ms faster on short phrases and 20-30 % faster on long ones
-(T-MT-1). Recommended: beam 1. Not changed yet - awaiting the user's
-decision.
+**D11 - Judge ASR/MT mainly on "Remote" lines** while the mic shortfall is
+open. Status: active.
+
+**D12 - Minimum-letters rule is a translation guard, not a quality score.**
+Text with < 2 Armenian letters is not sent to NLLB (it invents sentences).
+Short replies «այո», «ոչ», «հա», «չէ» stay translatable. Evidence: T-OFF-1.
+Status: active; not yet seen live. Commit: 86a44f3.
+
+**D13 - Pin everything a result depends on; report only laptop-Windows
+numbers.** Model files by Hugging Face commit + sha256, packages by exact
+version (`python -m livetrans.models --verify`). ~~"the sandbox is used to
+check scripts run"~~ superseded (user, 2026-10-31): all checks run in the
+laptop's Windows environment; the sandbox is used only to edit files and run
+git. Status: active. Commits: 270fea2, cdb7cca.
+
+**D14 - ASR head: keep CTC (E3).** Motivation for testing RNN-T: Karpov et
+al., Interspeech 2025, Section 3 (hybrid FastConformer trained with RNN-T and
+CTC decoders; RNN-T described as generally better) and Tables 1-2
+(RNN-T-only WER). Motivation, not proof. Outcome: RNN-T fp32 -0.52 WER
+points on FLEURS, 95 % CI -1.28 .. +0.26, p = 0.15, ~5x slower; not better
+on 4 call clips. Decision: keep CTC; RNN-T int8 not tested (precondition not
+met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: cdb7cca.
+
+**D15 - Warm-up and beam by measurement.** Warm-up: keep "minimal" (E1: first
+phrase within ~0.07 s of warm; "representative" +2 s start-up, no gain).
+Start-up is reported separately from live latency. Beam: **beam 1**
+(E2: same meaning as beam 4 on 5 corrected call phrases, 203.5 vs 256.0 ms;
+T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Status: warm-up closed; beam 1
+active since d194c54, **pending live verification (T-LIVE-5)**.
+Commits: a2a792a, 9eb54c5, d194c54.
+
+**D16 - Final model pipeline.** Silero VAD -> FastConformer-hy CTC (fp32)
+-> NLLB-200 600M int8, beam 1. Status: active, subject to T-LIVE-5.
+
+**D17 - NLLB-200 distilled 1.3B: proposed, not tested.** Candidate for the
+place-name errors in E2. No measurement exists; no quality or speed claim is
+made. Deferred (user, 2026-10-31). Status: proposed, not tested.
+
+**D18 - Deferred for now (user, 2026-10-31):** NLLB-1.3B (D17), call-reference
+expansion (10 unconfirmed rows) and further dataset work, own-voice test,
+mic shortfall investigation (D10), zero-insertion fix (D7).
+
+**D19 - Next priorities (user, 2026-10-31):** (1) verify beam 1 in a short
+live call (T-LIVE-5); (2) remote-speaker labels ("Speaker 1/2/..."); (3)
+final acceptance test against the brief. Status: open.
