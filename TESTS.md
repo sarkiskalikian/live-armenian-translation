@@ -123,7 +123,10 @@ Inferred:
 - The mic loses audio **without** any ASR/MT CPU load, so H1 (model CPU
   starvation) cannot be the sole cause. Whether model load makes it worse is
   unknown. The ASR/OMP mitigations from D10 are therefore not the first lever.
-- The loss comes in ~0.5 s blocks rather than a steady trickle.
+- ~~The loss comes in ~0.5 s blocks~~ **Corrected after T-REC-2:** the ~0.5 s
+  events are an artefact of the loss detector (it confirms a deficit once
+  lateness has exceeded 0.3 s for 1 s), so a steady shortfall also shows up
+  as regular ~0.45 s events. The data do not show whether the loss is bursty.
 - 1.57 s confirmed lost of ~14.7 s explains ~11 %; the rest of the 16 % gap is
   lateness still unconfirmed when the run stopped (loss is only confirmed
   after 1 s without recovery).
@@ -141,9 +144,48 @@ Hypotheses now (unconfirmed):
   condition that differed from the T-M0-1 session (time-varying).
 - H1 model CPU load: may still contribute; not the sole cause.
 
+## T-REC-2 - Plain recorder in the same Meet call (2026-10-30 22:01) - mic loss REPRODUCED
+`recordings/20261030-220126`, commit 7938c53, `tools/m0_record.py --seconds 120`,
+20 ms buffer; no VAD, no resampling, no models (per buffer: write WAV only).
+Both people talked (mic active 36 %, loopback 31 % of 50 ms frames).
+User impression after the run: "no problem in capturing the sounds".
+
+Measured (raw frame counts from PortAudio, independent of the aligner):
+- Mic: 4,985,280 frames = 103.86 s over 118.91 s since its first sample ->
+  **0.873** delivered; 32 loss events (14.70 s) at a regular ~3 s spacing,
+  each 0.35-0.50 s, in speech and in silence alike; 41 late-but-recovered;
+  0 overflow flags.
+- Loopback: 5,718,720 frames = 119.14 s over 118.87 s -> 1.002; no loss.
+
+Inferred:
+- The plain recorder loses mic audio at the same order of magnitude as the
+  live program, so neither the models (H1) nor the live pipeline's per-buffer
+  work (H2) is necessary for the loss.
+- The regular spacing matches a steady deficit of ~13 % seen through the
+  detector (0.127 s/s reaches the 0.3 s threshold, is confirmed 1 s later at
+  ~0.43 s, then resets), see the correction under T-LIVE-2.
+- The user's listening impression and the frame counts disagree; the frame
+  counts are taken as the evidence. Not yet known: whether the shortfall is
+  dropped packets (missing audio) or the device delivering at a lower actual
+  rate (time-stretched audio) - per-buffer timing is needed to tell.
+
+Mic delivery over time (same device, same 20 ms buffer):
+
+| Test | Time | Mic delivered | Notes |
+|---|---|---|---|
+| T-M0-1 | 20:18 | 1.000 | recorder, Meet call |
+| T-LIVE-0 | 21:04 | 0.999 (derived) | live, models on, mic only |
+| T-LIVE-1 | 21:13 | 0.929 (derived) | live, models on, both talking |
+| T-LIVE-2 | 21:54 | 0.840 (15 s run) | live, models off |
+| T-REC-2 | 22:01 | 0.873 | recorder, Meet call |
+
+Leading hypothesis now: **H3 environment** - a condition that started between
+21:04 and 21:13 and persisted (candidates: Meet's use of the same mic, e.g. its
+audio processing; Bluetooth activity; power/thermal state). Unconfirmed.
+
 ## Pending
-- T-REC-2: plain recorder (`tools/m0_record.py`) for 60-120 s under the same
-  call conditions. Loss there -> H3 (environment/driver); no loss -> the live
-  pipeline's per-buffer processing (H2).
-- T-LIVE-3: models on, test-1 settings (originally planned; lower priority
-  since T-LIVE-2).
+- Instrument: log every PortAudio callback (arrival time, frames, status) so
+  dropped packets can be told apart from a slow device clock.
+- T-REC-3: same recorder, **Meet closed** (one variable). Loss gone -> Meet's
+  use of the mic is the trigger; loss remains -> system state since 21:13.
+- T-LIVE-3: models on, test-1 settings (deferred).
