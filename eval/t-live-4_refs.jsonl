@@ -6,7 +6,7 @@
 {"wav": "logs/20261030-221541/00057.15_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հովհ.", "ref_hy": "Հովհ.", "ref_status": "unconfirmed", "beam_check": false}
 {"wav": "logs/20261030-221541/00065.44_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ։", "ref_hy": "Հ։", "ref_status": "unconfirmed", "beam_check": false}
 {"wav": "logs/20261030-221541/00068.32_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ։", "ref_hy": "Հ։", "ref_status": "unconfirmed", "beam_check": false}
-{"wav": "logs/20261030-221541/00070.08_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Ես զբաղում եմ քինիկական հետազոտություններ հետ։", "ref_hy": "Ես զբաղում եմ քինիկական հետազոտություններ հետ։", "ref_status": "unconfirmed", "beam_check": true}
+{"wav": "logs/20261030-221541/00070.08_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Ես զբաղում եմ քինիկական հետազոտություններ հետ։", "ref_hy": "Ես զբաղվում եմ կլինիկական հետազոտություններ հետ։", "ref_status": "confirmed", "beam_check": true, "ref_note": "user, 2026-10-31: զբաղում -> զբաղվում, քինիկական -> կլինիկական; ending 'հետազոտություններ հետ' as recognised"}
 {"wav": "logs/20261030-221541/00075.71_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Հ է։", "ref_hy": "Հ է։", "ref_status": "unconfirmed", "beam_check": false}
 {"wav": "logs/20261030-221541/00082.56_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Լավ է, ն է, ոչինչ։", "ref_hy": "Լավ է, ն է, ոչինչ։", "ref_status": "unconfirmed", "beam_check": false}
 {"wav": "logs/20261030-221541/00095.46_Remote.wav", "source": "loopback", "intact": true, "asr_hy": "Մեր մոտ ժամը տ տասնհինգ անց։", "ref_hy": "Մեր մոտ ժամը տ տասնհինգ անց։", "ref_status": "unconfirmed", "beam_check": true}
