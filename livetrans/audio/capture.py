@@ -195,7 +195,7 @@ class ChunkAligner:
 class CaptureStream:
     """One PyAudio input stream feeding a ChunkAligner via a worker thread."""
 
-    def __init__(self, pa, device, t0: float, sink, buffer_s: float = 0.05, on_loss=None):
+    def __init__(self, pa, device, t0: float, sink, buffer_s: float = 0.02, on_loss=None):
         import pyaudiowpatch as pyaudio   # imported here so ChunkAligner works without it
         self._pyaudio = pyaudio
         self.pa = pa

@@ -21,9 +21,6 @@ from pathlib import Path
 
 
 def main() -> int:
-    # CTranslate2 uses OpenMP; stop its threads busy-waiting between calls so they
-    # do not compete with the audio threads (must be set before ctranslate2 loads).
-    os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
     for s in (sys.stdout, sys.stderr):        # Armenian text on any Windows console
         try:
             s.reconfigure(encoding="utf-8")
@@ -34,7 +31,12 @@ def main() -> int:
     ap.add_argument("--list-devices", action="store_true")
     ap.add_argument("--mic", type=int)
     ap.add_argument("--loopback", type=int)
-    ap.add_argument("--asr-threads", type=int, default=4)
+    # Candidate mitigations for the mic loss (DECISIONS.md D10). Defaults = T-LIVE-1 config;
+    # change ONE per test run.
+    ap.add_argument("--asr-threads", type=int, default=None, help="ONNX Runtime threads (default: all cores)")
+    ap.add_argument("--asr-no-spin", action="store_true", help="stop ONNX Runtime busy-waiting between runs")
+    ap.add_argument("--omp-passive", action="store_true", help="set OMP_WAIT_POLICY=PASSIVE for CTranslate2")
+    ap.add_argument("--capture-buffer-ms", type=int, default=20, help="PortAudio buffer per callback")
     ap.add_argument("--mt-threads", type=int, default=4)
     ap.add_argument("--beam", type=int, default=4, help="translation beam size (1 = fastest)")
     ap.add_argument("--min-silence", type=float, default=0.5, help="seconds of silence that end a phrase")
@@ -43,6 +45,11 @@ def main() -> int:
     ap.add_argument("--no-models", action="store_true",
                     help="diagnostic: capture + phrase cutting only (no ASR/MT), to isolate capture problems")
     args = ap.parse_args()
+    if args.omp_passive:                          # must be set before ctranslate2 is imported
+        os.environ["OMP_WAIT_POLICY"] = "PASSIVE"
+    print(f"config: asr_threads={args.asr_threads or 'default'} asr_spin={'off' if args.asr_no_spin else 'on'} "
+          f"omp_passive={'on' if args.omp_passive else 'off'} capture_buffer={args.capture_buffer_ms} ms "
+          f"models={'off' if args.no_models else 'on'} beam={args.beam}")
 
     import pyaudiowpatch as pyaudio
 
@@ -75,7 +82,7 @@ def main() -> int:
             t = time.perf_counter()
             from livetrans.asr import Transcriber
             from livetrans.translate import Translator
-            asr = Transcriber(models.ASR_DIR, threads=args.asr_threads)
+            asr = Transcriber(models.ASR_DIR, threads=args.asr_threads, spin=not args.asr_no_spin)
             mt = Translator(models.MT_DIR, threads=args.mt_threads, beam_size=args.beam)
             # warm-up so the first real phrase is not slowed by lazy initialisation
             import numpy as np
@@ -101,6 +108,7 @@ def main() -> int:
             seg = Segmenter(name, vad, worker.submit, **seg_kw)
             conv = To16kMono(dev.rate)
             pipes[name] = (seg, conv, CaptureStream(pa, dev, t0, lambda pcm, s=seg, c=conv: s.push(c(pcm)),
+                                                    buffer_s=args.capture_buffer_ms / 1000,
                                                     on_loss=loss_warning(label)))
 
         problems: list[str] = []

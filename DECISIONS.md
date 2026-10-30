@@ -55,4 +55,6 @@ commit already contains three mitigations applied together (ASR thread cap
 + no spinning, `OMP_WAIT_POLICY=PASSIVE`, capture buffer 20 -> 50 ms). An
 improvement with all three on would not show which one helped. Plan: make
 them switchable with defaults equal to the T-LIVE-1 configuration, reproduce
-the failure (T-LIVE-3), then test each on its own. Status: open.
+the failure (T-LIVE-3), then test each on its own. Status: open. Flags now
+exist (`--asr-threads N`, `--asr-no-spin`, `--omp-passive`, `--capture-buffer-ms N`);
+with none given the program runs the T-LIVE-1 configuration.

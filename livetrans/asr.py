@@ -16,18 +16,22 @@ SAMPLE_RATE = 16_000
 
 
 class Transcriber:
-    def __init__(self, model_dir: str | Path = "models/asr-hy-fastconformer", threads: int = 4):
+    def __init__(self, model_dir: str | Path = "models/asr-hy-fastconformer", threads: int | None = None,
+                 spin: bool = True):
+        """threads=None and spin=True reproduce ONNX Runtime's defaults (all cores,
+        busy-waiting between runs), i.e. the T-LIVE-1 configuration. Capping threads
+        and disabling spinning are candidate mitigations for the mic loss (D10)."""
         import onnx_asr
         import onnxruntime as rt
 
-        # Cap threads and turn off busy-waiting: by default ONNX Runtime uses every core
-        # and keeps it spinning between runs. Suspected cause of the microphone losing
-        # ~7% of its audio in live test 1 (to be confirmed with --no-models).
-        opts = rt.SessionOptions()
-        opts.intra_op_num_threads = threads
-        opts.inter_op_num_threads = 1
-        opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
-        opts.add_session_config_entry("session.inter_op.allow_spinning", "0")
+        opts = None
+        if threads is not None or not spin:
+            opts = rt.SessionOptions()
+            if threads is not None:
+                opts.intra_op_num_threads = threads
+            if not spin:
+                opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
+                opts.add_session_config_entry("session.inter_op.allow_spinning", "0")
         # onnx-asr reads the model from model_dir, downloading it there first if missing
         self.model = onnx_asr.load_model(ASR_REPO, path=Path(model_dir), sess_options=opts,
                                          providers=["CPUExecutionProvider"])
