@@ -48,7 +48,7 @@ clock would look the same).
 | T-SPK-0 | Speaker tracker logic | cloud | A->B->A = 1->2->1 with stub embeddings | done |
 | T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | 2 speakers found at 0.25-0.35, 92.3 % agreement; A->B->A PASS at 0.30 | done -> threshold 0.30 |
 | T-LIVE-7 | Separate live call, two real remote people, --speakers | laptop-Windows | - | not possible now (no second remote person available) |
-| T-SPK-2 | Live --speakers on held-out audio played into the loopback | laptop-Windows | - | pending |
+| T-SPK-2 | Live --speakers on held-out audio played into the loopback | laptop-Windows | 11/11 phrases correct, 2 speakers, A->B->A PASS, max 1.94 s | done -> speakers on by default |
 
 ---
 
@@ -277,13 +277,22 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Limitations:** threshold tuned on the same clips it is scored on (no held-out data); B has only 4 clips, all far from the phone; "agreement" maps each tracker speaker to its majority label, so it hides fragmentation (use "speakers created" too); same- and different-speaker similarities overlap (Meet-processed audio lowers same-speaker similarity), so two similar voices may merge at 0.30. ~~A -> B -> A not yet run at 0.30~~ done (PASS).
 - **Commit:** labels 5454b11; threshold change in this commit.
 
-## T-SPK-2 - Live --speakers on held-out audio played into the loopback (PENDING)
+## T-SPK-2 - Live --speakers on held-out audio played into the loopback (2026-10-31 19:23)
 - **Question:** on audio never used for tuning, does the live program (capture -> VAD -> speaker -> ASR -> MT) keep two readers apart, give A -> B -> A = Speaker 1 -> 2 -> 1, and stay within 5 s with the speaker step on?
-- **Why this test:** a second real remote person is not available (user, 2026-10-31 18:58), so T-LIVE-7 cannot be run now.
-- **Environment:** laptop-Windows; no call - `tools/play_speakers.py` plays into the Buds output, the live program records its loopback.
-- **Configuration:** live program with `--speakers` (threshold 0.30); played sequence A B A B B A A B A B, 1.5 s gaps; A = longest FEMALE FLEURS test clip (29.0 s, one reader), B = longest MALE clip (30.9 s, one reader), each cut into 5 pieces at quiet points, normalised to peak 0.3. Ground truth = play times (wall clock) matched to `session_t0_unix`. Scored by `tools/score_playback.py`.
-- **Logic check (cloud, synthetic):** piece cutting covers the whole clip and cuts in the quiet gaps; the scorer matches phrases to pieces by overlap, counts unmatched phrases and pieces without any phrase, reports agreement, speakers created, A -> B -> A and latency.
-- **Limitations (known in advance):** not a real call (no Meet noise suppression/codec); female vs male is easier than two similar voices; FLEURS is read speech; one reader per label guaranteed only because each label is a single recording.
+- **Why this test:** a second real remote person is not available (user, 2026-10-31 18:58), so T-LIVE-7 could not be run.
+- **Environment:** laptop-Windows; no call. `tools/play_speakers.py --output 12` played into "Headphones (Sarkis's Buds3 Pro)"; the live program recorded its loopback `[16]`.
+- **Configuration:** commit 53a9f72; `python -m livetrans --mic 14 --loopback 16 --speakers --save-audio` (threshold 0.30, beam 1, CTC). Sequence A B A B B A A B A B, 1.5 s gaps. A = FLEURS `17253328370927182543.wav` (female, one reader), B = `303611548261574476.wav` (male, one reader), 5 pieces each (4.7-7.1 s), peak 0.3. Files: `logs/20261031-192300`, `results/play_20261031-192428.json`, `results/score_playback_20261031-192300.json`.
+- **Measured:**
+  - 11 Remote phrases, all matched to a played piece; 0 unmatched; every piece produced at least one phrase (B2 produced two).
+  - Speakers created: 2; Speaker 1 = A, Speaker 2 = B; **agreement 11/11 (100 %)**; assignments: 2 new, 9 match.
+  - **A -> B -> A (first three pieces): PASS** - Speaker 1, Speaker 2, Speaker 1.
+  - Similarity to the chosen speaker: 0.80-0.91 for matches of 3.5 s or more; 0.31 for a 1.2 s phrase (still correct); B's first phrase vs A's centroid 0.07.
+  - Latency (end of speech -> line): p50 1.26 s, p95 1.71 s, max 1.94 s (first phrase), **0 over 5 s**. Speaker step: median 0.109 s, max 0.147 s per phrase. Mean parts: VAD 0.55, queue 0.0, spk 0.10, ASR 0.11, MT 0.54 s.
+  - Start-up (not live latency): models 9.7 s, warm-up 0.7 s, speaker model 0.3 s.
+  - Capture: Remote delivered ratio 0.874 with 0 unrecovered-lag events and max lateness 0.022 s; the loopback started 9.35 s after t0 (nothing was playing yet) and stops delivering while Windows plays nothing - the ratio counts those idle periods, not lost speech. Me 0.998 (no one spoke).
+- **Decision:** speaker labels on by default (`--no-speakers` restores "Remote").
+- **Limitations:** not a real call - no Meet noise suppression or codec; on Meet audio (T-SPK-1) same-speaker similarity was much lower (mean 0.34 vs 0.80-0.91 here), so real calls will be harder. Female vs male is easier than two similar voices. Each label is one recording, so speaker identity is certain but voices did not change between pieces. Read speech. Two speakers only. An earlier play run (`results/play_20261031-192013.json`) has no scored session and is not used.
+- **Commit:** results and default change in this commit.
 
 ---
 

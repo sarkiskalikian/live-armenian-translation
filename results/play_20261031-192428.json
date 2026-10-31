@@ -1,0 +1,99 @@
+{
+ "device": "Headphones (Sarkis's Buds3 Pro)",
+ "order": [
+  "A",
+  "B",
+  "A",
+  "B",
+  "B",
+  "A",
+  "A",
+  "B",
+  "A",
+  "B"
+ ],
+ "gap_s": 1.5,
+ "peak": 0.3,
+ "readers": {
+  "A": {
+   "wav": "fleurs_hy/17253328370927182543.wav",
+   "gender": "FEMALE"
+  },
+  "B": {
+   "wav": "fleurs_hy/303611548261574476.wav",
+   "gender": "MALE"
+  }
+ },
+ "plan": [
+  {
+   "label": "A",
+   "piece": 1,
+   "start_unix": 1793460193.278,
+   "end_unix": 1793460198.067,
+   "audio_s": 4.8
+  },
+  {
+   "label": "B",
+   "piece": 1,
+   "start_unix": 1793460199.581,
+   "end_unix": 1793460206.66,
+   "audio_s": 7.1
+  },
+  {
+   "label": "A",
+   "piece": 2,
+   "start_unix": 1793460208.195,
+   "end_unix": 1793460214.234,
+   "audio_s": 6.05
+  },
+  {
+   "label": "B",
+   "piece": 2,
+   "start_unix": 1793460215.754,
+   "end_unix": 1793460220.513,
+   "audio_s": 4.7
+  },
+  {
+   "label": "B",
+   "piece": 3,
+   "start_unix": 1793460222.048,
+   "end_unix": 1793460228.89,
+   "audio_s": 6.85
+  },
+  {
+   "label": "A",
+   "piece": 3,
+   "start_unix": 1793460230.427,
+   "end_unix": 1793460235.922,
+   "audio_s": 5.5
+  },
+  {
+   "label": "A",
+   "piece": 4,
+   "start_unix": 1793460237.474,
+   "end_unix": 1793460243.33,
+   "audio_s": 5.85
+  },
+  {
+   "label": "B",
+   "piece": 4,
+   "start_unix": 1793460244.846,
+   "end_unix": 1793460250.602,
+   "audio_s": 5.75
+  },
+  {
+   "label": "A",
+   "piece": 5,
+   "start_unix": 1793460252.129,
+   "end_unix": 1793460258.905,
+   "audio_s": 6.78
+  },
+  {
+   "label": "B",
+   "piece": 5,
+   "start_unix": 1793460260.4,
+   "end_unix": 1793460266.911,
+   "audio_s": 6.5
+  }
+ ]
+}

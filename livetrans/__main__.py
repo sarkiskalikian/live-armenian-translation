@@ -47,8 +47,9 @@ def main() -> int:
     ap.add_argument("--save-audio", action="store_true")
     ap.add_argument("--warmup", choices=("minimal", "representative"), default="minimal",
                     help="model warm-up before listening (start-up cost, not live latency)")
-    ap.add_argument("--speakers", action="store_true",
-                    help="label remote phrases Speaker 1/2/... by voice (default off until verified)")
+    ap.add_argument("--speakers", action=argparse.BooleanOptionalAction, default=True,
+                    help="label remote phrases Speaker 1/2/... by voice (default on since T-SPK-2; "
+                         "--no-speakers prints 'Remote' instead)")
     ap.add_argument("--spk-threshold", type=float, default=0.30,
                     help="cosine similarity to join a speaker (0.30 chosen in T-SPK-1)")
     ap.add_argument("--no-models", action="store_true",

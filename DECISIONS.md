@@ -15,7 +15,7 @@ loopback ─┘   (PyAudioWPatch)    (soxr)      (0.5 s silence)      (ONNX, fp3
 ```
 
 Audio -> FastConformer (CTC head) -> Armenian text -> NLLB -> English text.
-Labels: "Me" (mic) and "Remote" (loopback); per-speaker remote labels are next (D19).
+Labels: "Me" (mic); remote phrases "Speaker 1", "Speaker 2", ... by voice (D20).
 
 ---
 
@@ -112,8 +112,9 @@ T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Live check T-LIVE-5: 34 phrases,
 "minimal" and beam 1 are the defaults (d194c54).
 Commits: a2a792a, 9eb54c5, d194c54.
 
-**D16 - Final model pipeline.** Silero VAD -> FastConformer-hy CTC (fp32)
--> NLLB-200 600M int8, beam 1. Status: active; verified live in T-LIVE-5.
+**D16 - Final model pipeline.** Silero VAD -> [loopback only: WeSpeaker
+ResNet34 speaker label] -> FastConformer-hy CTC (fp32) -> NLLB-200 600M int8,
+beam 1. Status: active; verified live in T-LIVE-5.
 
 **D17 - NLLB-200 distilled 1.3B: proposed, not tested.** Candidate for the
 place-name errors in E2. No measurement exists; no quality or speed claim is
@@ -124,7 +125,7 @@ expansion (10 unconfirmed rows) and further dataset work, own-voice test,
 mic shortfall investigation (D10), zero-insertion fix (D7).
 
 **D19 - Next priorities (user, 2026-10-31):** (1) ~~verify beam 1 in a short
-live call~~ done (T-LIVE-5); (2) remote-speaker labels ("Speaker 1/2/..."); (3)
+live call~~ done (T-LIVE-5); (2) ~~remote-speaker labels~~ done (D20, T-SPK-2); (3)
 final acceptance test against the brief. Status: open.
 
 **D20 - Remote-speaker labels: WeSpeaker ResNet34 embeddings + online
@@ -146,5 +147,7 @@ Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, 1ffc892).
 A -> B -> A at 0.30: PASS on real clips (T-SPK-1). A second real remote person
 is not available now (user, 18:58), so the separate live validation uses
 held-out recordings played into the loopback (T-SPK-2) instead of T-LIVE-7;
-a real two-person call remains part of the final acceptance test. Turned on by
-default only if T-SPK-2 passes.
+a real two-person call remains part of the final acceptance test.
+T-SPK-2 passed (11/11 phrases, 2 speakers, A -> B -> A, max latency 1.94 s,
+speaker step ~0.11 s): **speaker labels are on by default**; `--no-speakers`
+prints "Remote" as before. Status: active.

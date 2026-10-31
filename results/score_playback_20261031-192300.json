@@ -1,0 +1,166 @@
+{
+ "plan": "results\\play_20261031-192428.json",
+ "log": "logs\\20261031-192300",
+ "remote_phrases": 11,
+ "matched": 11,
+ "unmatched": 0,
+ "pieces_without_any_phrase": [],
+ "speakers_created": 2,
+ "mapping": {
+  "Speaker 1": "A",
+  "Speaker 2": "B"
+ },
+ "agreement": 1.0,
+ "aba_first_three_pieces": {
+  "labels": [
+   "Speaker 1",
+   "Speaker 2",
+   "Speaker 1"
+  ],
+  "status": "PASS"
+ },
+ "latency_s": {
+  "p50": 1.26,
+  "p95": 1.71,
+  "max": 1.94,
+  "over_5s": 0
+ },
+ "spk_s": {
+  "median": 0.109,
+  "max": 0.147
+ },
+ "phrases": [
+  {
+   "piece": "A1",
+   "true": "A",
+   "label": "Speaker 1",
+   "speaker": 1,
+   "reason": "new",
+   "similarity": null,
+   "audio_s": 4.39,
+   "hy": "Սակայն այս պլանները հօս ցնդեցին գրեթե մեկ գիշերվա ընթացքում երբ սովետ։",
+   "latency_s": 1.938,
+   "spk_s": 0.11
+  },
+  {
+   "piece": "B1",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "new",
+   "similarity": 0.073,
+   "audio_s": 6.7,
+   "hy": "Ըստ թիեմզեթ ժամանցային լրատվական կայքի՝ լուսանկարիչը կանգնեցրել է իր մեքենան։",
+   "latency_s": 1.415,
+   "spk_s": 0.147
+  },
+  {
+   "piece": "A2",
+   "true": "A",
+   "label": "Speaker 1",
+   "speaker": 1,
+   "reason": "match",
+   "similarity": 0.843,
+   "audio_s": 6.47,
+   "hy": "Հրական միության կարմիր բանակի մոտավորապես ութ հարյուր հազար զինվոր մուտք գործեց եւ ստեղծեց Բելառուսակ։",
+   "latency_s": 1.391,
+   "spk_s": 0.121
+  },
+  {
+   "piece": "B2",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "match",
+   "similarity": 0.812,
+   "audio_s": 3.46,
+   "hy": "Սուպել Վվեդայի պուրակի մոտ՞։",
+   "latency_s": 0.983,
+   "spk_s": 0.064
+  },
+  {
+   "piece": "B2",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "match",
+   "similarity": 0.311,
+   "audio_s": 1.19,
+   "hy": "Կողմում։",
+   "latency_s": 0.81,
+   "spk_s": 0.023
+  },
+  {
+   "piece": "B3",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "match",
+   "similarity": 0.804,
+   "audio_s": 7.11,
+   "hy": "Մյուս կողմում եւ փորձել լուսանկարել երթեւեկությունը կանգնեցնող ոստիկանին, նախքան ճանապարհը հատելը։",
+   "latency_s": 1.481,
+   "spk_s": 0.129
+  },
+  {
+   "piece": "A3",
+   "true": "A",
+   "label": "Speaker 1",
+   "speaker": 1,
+   "reason": "match",
+   "similarity": 0.838,
+   "audio_s": 5.77,
+   "hy": "Կան եւ ուկրաինական ճակատները՝ Լեհաստանի Արելյան տարածաշրջանները ներխուժելուց հետո։",
+   "latency_s": 1.259,
+   "spk_s": 0.103
+  },
+  {
+   "piece": "A4",
+   "true": "A",
+   "label": "Speaker 1",
+   "speaker": 1,
+   "reason": "match",
+   "similarity": 0.906,
+   "audio_s": 6.22,
+   "hy": "Խաղտելով Ռրիայի խաղաղության դաշնագիրը սովետական լեական լեհական չար։",
+   "latency_s": 1.367,
+   "spk_s": 0.109
+  },
+  {
+   "piece": "B4",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "match",
+   "similarity": 0.886,
+   "audio_s": 5.96,
+   "hy": "Եվ շարունակելը հուշելով կալիֆոռնիայի ճանապարհին ոստիկանության աշխատակցին։",
+   "latency_s": 1.231,
+   "spk_s": 0.109
+  },
+  {
+   "piece": "A5",
+   "true": "A",
+   "label": "Speaker 1",
+   "speaker": 1,
+   "reason": "match",
+   "similarity": 0.907,
+   "audio_s": 6.15,
+   "hy": "Հակվելու պայմանագիրը եւ այլ թե՛ երկկողմանի, թե՛ բազմակողմանի միջազգային համաձայնագրեր։",
+   "latency_s": 1.242,
+   "spk_s": 0.106
+  },
+  {
+   "piece": "B5",
+   "true": "B",
+   "label": "Speaker 2",
+   "speaker": 2,
+   "reason": "match",
+   "similarity": 0.892,
+   "audio_s": 5.9,
+   "hy": "Որը երթեւեկությունն էր կանգնեցնում, կարգադրել նրան երկու անգամ գնալ֊գալ։",
+   "latency_s": 1.208,
+   "spk_s": 0.111
+  }
+ ]
+}
