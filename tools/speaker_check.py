@@ -37,6 +37,10 @@ from livetrans.audio.wavio import read_wav_float, to_16k_mono_float  # noqa: E40
 from livetrans.speakers import SpeakerTracker, WeSpeakerEmbedder  # noqa: E402
 
 
+# labels not scored: unknown, both voices, and the user's own voice echoed back through the remote phone
+EXCLUDED = ("?", "X", "ME")
+
+
 def utf8_console() -> None:
     for s in (sys.stdout, sys.stderr):
         try:
@@ -52,7 +56,7 @@ def replay(rows, audio, cache, threshold, tracker_kw):
 
 def score(rows, decisions):
     known = [(r["speaker"], d.speaker) for r, d in zip(rows, decisions)
-             if r.get("speaker_status") == "confirmed" and r["speaker"] not in ("?", "X")]
+             if r.get("speaker_status") == "confirmed" and r["speaker"] not in EXCLUDED]
     mapping = {}
     for spk in {p for _, p in known}:
         mapping[spk] = Counter(t for t, p in known if p == spk).most_common(1)[0][0]
@@ -95,7 +99,7 @@ def main() -> int:
 
     # 2. same vs different speaker similarity (confirmed, embedded clips only)
     lab = [(i, r["speaker"]) for i, r in enumerate(rows)
-           if r.get("speaker_status") == "confirmed" and r["speaker"] not in ("?", "X") and id(audio[i]) in cache]
+           if r.get("speaker_status") == "confirmed" and r["speaker"] not in EXCLUDED and id(audio[i]) in cache]
     same, diff = [], []
     for x in range(len(lab)):
         for y in range(x + 1, len(lab)):
