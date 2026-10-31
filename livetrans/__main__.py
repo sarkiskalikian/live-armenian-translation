@@ -49,7 +49,8 @@ def main() -> int:
                     help="model warm-up before listening (start-up cost, not live latency)")
     ap.add_argument("--speakers", action="store_true",
                     help="label remote phrases Speaker 1/2/... by voice (default off until verified)")
-    ap.add_argument("--spk-threshold", type=float, default=0.45, help="cosine similarity to join a speaker")
+    ap.add_argument("--spk-threshold", type=float, default=0.30,
+                    help="cosine similarity to join a speaker (0.30 chosen in T-SPK-1)")
     ap.add_argument("--no-models", action="store_true",
                     help="diagnostic: capture + phrase cutting only (no ASR/MT), to isolate capture problems")
     args = ap.parse_args()

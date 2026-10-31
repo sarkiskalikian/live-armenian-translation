@@ -139,5 +139,9 @@ extra dependency, follows the incremental-clustering rules from the plan
 phrase (overlap and two voices in one phrase are not split); short replies
 may inherit the wrong label; Meet's noise gating removes parts of quiet
 speech; VoxCeleb-trained model, untested on Armenian telephony audio.
-Status: implemented behind `--speakers` (default off); threshold 0.45 is a
-placeholder until T-SPK-1. Model revision pinned after first download.
+Status: implemented behind `--speakers` (default off). Threshold: ~~0.45
+placeholder~~ superseded by T-SPK-1 -> **0.30** (0.25-0.35 found the correct
+2 speakers with 92.3 % agreement; >= 0.45 split one person into several).
+Embedding cost ~35 ms per phrase. Model pinned (f0c48c2, 1ffc892). Open:
+A -> B -> A at 0.30 and the separate live call (T-LIVE-7) before turning it on
+by default.

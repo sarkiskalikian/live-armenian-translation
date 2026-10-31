@@ -71,7 +71,7 @@ def main() -> int:
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("labels", type=Path)
-    ap.add_argument("--threshold", type=float, default=0.45, help="threshold used for the A->B->A check")
+    ap.add_argument("--threshold", type=float, default=0.30, help="threshold used for the A->B->A check")
     ap.add_argument("--sweep", type=float, nargs="+", default=[0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65])
     args = ap.parse_args()
 

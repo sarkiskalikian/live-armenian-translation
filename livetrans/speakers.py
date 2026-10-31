@@ -54,7 +54,7 @@ class Decision:
 @dataclass
 class SpeakerTracker:
     embed: callable
-    threshold: float = 0.45
+    threshold: float = 0.30          # T-SPK-1: middle of the 0.25-0.35 range that found 2 speakers
     min_embed_s: float = 1.0
     min_new_s: float = 1.5
     min_update_s: float = 1.5

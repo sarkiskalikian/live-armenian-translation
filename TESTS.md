@@ -46,7 +46,7 @@ clock would look the same).
 | T-LIVE-6 | Call with two remote people (dev recording) | laptop-Windows | 0/44 over 5 s, max 1.75 s | done |
 | T-INSP-1 | Where did missed speech go? (T-LIVE-6 files) | laptop-sandbox | Meet gates speech to digital silence | done |
 | T-SPK-0 | Speaker tracker logic | cloud | A->B->A = 1->2->1 with stub embeddings | done |
-| T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | - | pending labels + model |
+| T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | 2 speakers found at 0.25-0.35, 92.3 % agreement; A->B->A PASS at 0.45 | done -> threshold 0.30 |
 | T-LIVE-7 | Separate live call with --speakers | laptop-Windows | - | pending |
 
 ---
@@ -253,6 +253,28 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Decision:** wire into the live program behind `--speakers` (default off until T-SPK-1 and T-LIVE-7 pass).
 - **Limitations:** logic only; real embeddings and thresholds untested.
 - **Commit:** this commit.
+
+## T-SPK-1 - Speaker labels on the real T-LIVE-6 Remote clips (2026-10-31 18:28)
+- **Question:** do WeSpeaker embeddings + the online tracker separate the two remote people, at which threshold, and does A -> B -> A give Speaker 1 -> 2 -> 1?
+- **Environment:** laptop-Windows (Python 3.13.14, onnxruntime 1.31.1, onnx-asr 0.12.0).
+- **Configuration:** commit 5454b11, `tools/speaker_check.py eval/t-live-6_speakers.jsonl`; WeSpeaker ResNet34-LM @ f0c48c2 (sha256 7bb2f06e...), 2 threads; tracker min_embed 1.0 s, min_new 1.5 s, min_update 1.5 s. Labels by the user (all 28 clips): A 22, B 4 (8, 14, 15, 26), excluded: 19 (user's own voice echoed via the remote phone) and 24 (B, "not clear"). `results/speaker_check_t-live-6_speakers.json`.
+- **Measured:**
+  - Embedding time per clip: median 35 ms, max 104 ms (25 of 28 clips >= 1.0 s embedded); model load 0.63 s.
+  - Cosine similarity: same speaker n=196, mean 0.34 (p10 0.15, p90 0.53); different speakers n=80, mean 0.11 (p10 -0.01, p90 0.23, max 0.64). Same-speaker pairs below 0.30: 40 %; different-speaker pairs at or above 0.30: 7 %.
+  - Full replay in time order (26 scored clips):
+
+| threshold | agreement | speakers created |
+|---|---|---|
+| 0.25 / 0.30 / 0.35 | 92.3 % | 2 (correct) |
+| 0.40 | 88.5 % | 3 |
+| 0.45 / 0.50 / 0.55 | 88.5 % | 5 / 7 / 8 |
+| 0.60 / 0.65 | 92.3 % | 8 |
+
+  - At 0.30 the two errors are clip 8 (B, 1.35 s, too short to found a speaker -> given Speaker 1) and clip 10 (A, 1.6 s, audio "not clear" per user) - **clip 10 founded Speaker 2**, which B's clips 14, 15, 26 then joined. Clip 19 (echoed own voice) -> Speaker 1.
+  - A -> B -> A (clips 00008.26 A, 00083.07 B, 00104.67 A) at threshold 0.45: **PASS** (Speaker 1, 2, 1).
+- **Decision:** default threshold 0.30 (middle of the range that found the right number of speakers; 0.45 and above split one person into several). Speaker labels stay behind `--speakers` until the separate live call (T-LIVE-7).
+- **Limitations:** threshold tuned on the same clips it is scored on (no held-out data); B has only 4 clips, all far from the phone; "agreement" maps each tracker speaker to its majority label, so it hides fragmentation (use "speakers created" too); same- and different-speaker similarities overlap (Meet-processed audio lowers same-speaker similarity), so two similar voices may merge at 0.30; the A -> B -> A check was run at 0.45, not yet at 0.30.
+- **Commit:** labels 5454b11; threshold change in this commit.
 
 ---
 
