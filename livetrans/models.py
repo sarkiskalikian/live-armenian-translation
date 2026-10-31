@@ -20,6 +20,7 @@ ASR_DIR = ROOT / "models" / "asr-hy-fastconformer"
 ASR_RNNT_DIR = ROOT / "models" / "asr-hy-fastconformer-rnnt"
 MT_DIR = ROOT / "models" / "mt-nllb-600m-int8"
 VAD_DIR = ROOT / "models" / "vad-silero"
+SPK_DIR = ROOT / "models" / "spk-wespeaker-resnet34"
 
 MODELS = {
     "vad": dict(
@@ -40,6 +41,9 @@ MODELS = {
         repo="facebook/nllb-200-distilled-600M", revision="f8d333a098d19b4fd9a8b18f94170487ad3f821d",
         dir=MT_DIR, patterns=["sentencepiece.bpe.model"],
         sha256={"sentencepiece.bpe.model": "14bb8dfb35c0ffdea7bc01e56cea38b9e3d5efcdcb9c251d6b40538e1aab555a"}),
+    "spk": dict(  # WeSpeaker ResNet34-LM (VoxCeleb), ONNX, speaker embeddings for remote labels
+        repo="Wespeaker/wespeaker-voxceleb-resnet34-LM", revision=None,   # pinned after first download
+        dir=SPK_DIR, patterns=["voxceleb_resnet34_LM.onnx"], sha256={}, optional=True),
     # --- optional / under evaluation (not used by the live program) ---
     "asr-rnnt": dict(  # same NVIDIA weights, RNN-T (transducer) head, fp32 files only
         repo="Vana-Labs/stt-fastconformer-armenian",

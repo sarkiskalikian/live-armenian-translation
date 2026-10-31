@@ -4,6 +4,7 @@ Latency of a line = time it is printed - moment the speaker stopped (segment.end
 on the shared sample clock). It is split into:
   vad   - waiting for the end-of-phrase silence (min_silence) + capture delivery
   queue - waiting behind other segments (the single worker is busy)
+  spk   - remote-speaker embedding + assignment (only with --speakers, loopback only)
   asr   - speech recognition
   mt    - translation
 """
@@ -52,9 +53,11 @@ class Stats:
 class Worker(threading.Thread):
     """Single consumer: models run one segment at a time so they never fight for CPU."""
 
-    def __init__(self, asr, mt, t0: float, log_dir: Path | None = None, save_audio: bool = False):
+    def __init__(self, asr, mt, t0: float, log_dir: Path | None = None, save_audio: bool = False,
+                 speakers=None):
         super().__init__(daemon=True, name="worker")
         self.asr, self.mt, self.t0 = asr, mt, t0
+        self.speakers = speakers          # SpeakerTracker or None (then remote lines say "Remote")
         self.q: queue.Queue[Segment | None] = queue.Queue()
         self.stats = Stats()
         self.log_dir, self.save_audio = log_dir, save_audio
@@ -90,6 +93,12 @@ class Worker(threading.Thread):
 
     def _process(self, seg: Segment, t_queued: float) -> None:
         t_start = time.perf_counter()
+        label = LABELS[seg.source]
+        spk = None
+        if seg.source == "loopback" and self.speakers is not None:
+            spk = self.speakers.assign(seg.audio)
+            label = spk.label
+        t_spk = time.perf_counter()
         if self.asr is None:                     # --no-models diagnostic mode
             hy = "(models off)"
         else:
@@ -102,12 +111,12 @@ class Worker(threading.Thread):
         speech_end_wall = self.t0 + seg.end_s
         total = t_mt - speech_end_wall
         parts = {"vad": t_queued - speech_end_wall, "queue": t_start - t_queued,
-                 "asr": t_asr - t_start, "mt": t_mt - t_asr}
-        label = LABELS[seg.source]
+                 "spk": t_spk - t_start, "asr": t_asr - t_spk, "mt": t_mt - t_asr}
         dur = len(seg.audio) / 16_000
         flag = "  !! OVER 5 s" if total > BUDGET_S else ""
+        spk_txt = f"+ spk {parts['spk']:.2f} " if self.speakers is not None else ""
         timing = (f"latency {total:.1f}s = vad {parts['vad']:.1f} + queue {parts['queue']:.1f} "
-                  f"+ asr {parts['asr']:.1f} + mt {parts['mt']:.1f}  ({dur:.1f}s audio"
+                  f"{spk_txt}+ asr {parts['asr']:.1f} + mt {parts['mt']:.1f}  ({dur:.1f}s audio"
                   f"{', cut at max length' if seg.forced else ''}){flag}")
         if not translatable and self.asr is not None:
             self.stats.empty_asr += 1
@@ -120,6 +129,10 @@ class Worker(threading.Thread):
                "end_s": round(seg.end_s, 2), "audio_s": round(dur, 2), "forced": seg.forced,
                "hy": hy, "en": en, "latency_s": round(total, 3),
                **{f"{k}_s": round(v, 3) for k, v in parts.items()}}
+        if spk is not None:
+            row.update({"speaker": spk.speaker, "spk_reason": spk.reason,
+                        "spk_similarity": None if spk.similarity is None else round(spk.similarity, 3),
+                        "spk_updated": spk.updated})
         self.stats.rows.append(row)
         if self._log:
             self._log.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -144,9 +157,15 @@ def summarize(stats: Stats) -> dict:
             "latency_p95_s": round(float(np.percentile(lat, 95)), 2),
             "latency_max_s": round(float(lat.max()), 2),
             "over_budget": int((lat > BUDGET_S).sum()),
-            "mean_parts_s": {k: round(float(np.mean([r[f"{k}_s"] for r in rows])), 2)
-                             for k in ("vad", "queue", "asr", "mt")},
+            "mean_parts_s": {k: round(float(np.mean([r.get(f"{k}_s", 0.0) for r in rows])), 2)
+                             for k in ("vad", "queue", "spk", "asr", "mt")},
         }
+    spk = [r for r in stats.rows if "speaker" in r]
+    if spk:
+        out["remote_speakers"] = {f"Speaker {k}": sum(r["speaker"] == k for r in spk)
+                                  for k in sorted({r["speaker"] for r in spk})}
+        out["remote_speaker_reasons"] = {k: sum(r["spk_reason"] == k for r in spk)
+                                         for k in sorted({r["spk_reason"] for r in spk})}
     return out
 
 
@@ -162,7 +181,9 @@ def print_summary(summary: dict, capture_problems: list[str]) -> None:
         p = s["mean_parts_s"]
         print(f"{label:6}: {s['segments']} segments, latency p50 {s['latency_p50_s']}s, "
               f"p95 {s['latency_p95_s']}s, max {s['latency_max_s']}s, over 5 s: {s['over_budget']}  "
-              f"[mean vad {p['vad']} / queue {p['queue']} / asr {p['asr']} / mt {p['mt']}]")
+              f"[mean vad {p['vad']} / queue {p['queue']} / spk {p['spk']} / asr {p['asr']} / mt {p['mt']}]")
+    if summary.get("remote_speakers"):
+        print(f"remote speakers: {summary['remote_speakers']}  (how assigned: {summary['remote_speaker_reasons']})")
     problems = capture_problems + [f"processing: {f}" for f in summary["failures"]]
     print("failures: " + ("none" if not problems else ""))
     for p in problems:

@@ -17,6 +17,8 @@ import os
 import sys
 import time
 from datetime import datetime
+
+import numpy as np
 from pathlib import Path
 
 
@@ -45,6 +47,9 @@ def main() -> int:
     ap.add_argument("--save-audio", action="store_true")
     ap.add_argument("--warmup", choices=("minimal", "representative"), default="minimal",
                     help="model warm-up before listening (start-up cost, not live latency)")
+    ap.add_argument("--speakers", action="store_true",
+                    help="label remote phrases Speaker 1/2/... by voice (default off until verified)")
+    ap.add_argument("--spk-threshold", type=float, default=0.45, help="cosine similarity to join a speaker")
     ap.add_argument("--no-models", action="store_true",
                     help="diagnostic: capture + phrase cutting only (no ASR/MT), to isolate capture problems")
     args = ap.parse_args()
@@ -52,7 +57,8 @@ def main() -> int:
         os.environ["OMP_WAIT_POLICY"] = "PASSIVE"
     print(f"config: asr_threads={args.asr_threads or 'default'} asr_spin={'off' if args.asr_no_spin else 'on'} "
           f"omp_passive={'on' if args.omp_passive else 'off'} capture_buffer={args.capture_buffer_ms} ms "
-          f"models={'off' if args.no_models else 'on'} beam={args.beam}")
+          f"models={'off' if args.no_models else 'on'} beam={args.beam} "
+          f"speakers={'on (threshold ' + str(args.spk_threshold) + ')' if args.speakers else 'off'}")
 
     import pyaudiowpatch as pyaudio
 
@@ -78,6 +84,7 @@ def main() -> int:
 
         vad = SileroVad(models.vad_model_path())
         asr = mt = None
+        speakers = None
         startup = {}
         if args.no_models:
             print("DIAGNOSTIC MODE: --no-models (no recognition or translation)")
@@ -92,8 +99,16 @@ def main() -> int:
             from livetrans.warmup import warm_up
             startup["warmup_s"] = round(warm_up(asr, mt, args.warmup), 2)
             startup["warmup_mode"] = args.warmup
+            if args.speakers:
+                from livetrans.speakers import SpeakerTracker, WeSpeakerEmbedder
+                t = time.perf_counter()
+                embedder = WeSpeakerEmbedder(models.SPK_DIR)
+                embedder((0.003 * np.random.default_rng(0).standard_normal(24_000)).astype(np.float32))  # warm-up
+                speakers = SpeakerTracker(embedder, threshold=args.spk_threshold)
+                startup["speaker_model_s"] = round(time.perf_counter() - t, 2)
             print(f"Start-up (not part of live latency): models loaded in {startup['load_s']:.1f} s, "
-                  f"warm-up '{args.warmup}' {startup['warmup_s']:.1f} s")
+                  f"warm-up '{args.warmup}' {startup['warmup_s']:.1f} s"
+                  + (f", speaker model {startup['speaker_model_s']:.1f} s" if args.speakers else ""))
 
         log_dir = Path("logs") / datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -101,7 +116,7 @@ def main() -> int:
         print(f"Log: {log_dir}   Listening... (Ctrl+C to stop)\n", flush=True)
 
         t0 = time.perf_counter()
-        worker = Worker(asr, mt, t0, log_dir, save_audio=args.save_audio)
+        worker = Worker(asr, mt, t0, log_dir, save_audio=args.save_audio, speakers=speakers)
         worker.start()
         seg_kw = dict(min_silence_s=args.min_silence, max_speech_s=args.max_speech)
         pipes = {}

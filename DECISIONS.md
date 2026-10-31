@@ -90,7 +90,10 @@ numbers.** Model files by Hugging Face commit + sha256, packages by exact
 version (`python -m livetrans.models --verify`). ~~"the sandbox is used to
 check scripts run"~~ superseded (user, 2026-10-31): all checks run in the
 laptop's Windows environment; the sandbox is used only to edit files and run
-git. Status: active. Commits: 270fea2, cdb7cca.
+git. Clarified 2026-10-31: deterministic reading of saved files (no models,
+no timing, identical output on any OS - e.g. T-INSP-1) may run there and is
+labelled laptop-sandbox; anything with models or timing runs in Windows.
+Status: active. Commits: 270fea2, cdb7cca.
 
 **D14 - ASR head: keep CTC (E3).** Motivation for testing RNN-T: Karpov et
 al., Interspeech 2025, Section 3 (hybrid FastConformer trained with RNN-T and
@@ -123,3 +126,18 @@ mic shortfall investigation (D10), zero-insertion fix (D7).
 **D19 - Next priorities (user, 2026-10-31):** (1) ~~verify beam 1 in a short
 live call~~ done (T-LIVE-5); (2) remote-speaker labels ("Speaker 1/2/..."); (3)
 final acceptance test against the brief. Status: open.
+
+**D20 - Remote-speaker labels: WeSpeaker ResNet34 embeddings + online
+clustering (diart rules only).** Each loopback phrase >= 1.0 s is embedded
+(WeSpeaker voxceleb ResNet34-LM ONNX, loaded through onnx-asr - no new
+package); cosine >= threshold to the best centroid -> that speaker; else a new
+speaker, but only from phrases >= 1.5 s; centroids updated only from phrases
+>= 1.5 s; phrases < 1.0 s inherit the previous remote label. Labels never
+change once printed; mic phrases are always "Me". Why: small CPU model, no
+extra dependency, follows the incremental-clustering rules from the plan
+(Coria et al.) without their segmentation model. Known limits: one label per
+phrase (overlap and two voices in one phrase are not split); short replies
+may inherit the wrong label; Meet's noise gating removes parts of quiet
+speech; VoxCeleb-trained model, untested on Armenian telephony audio.
+Status: implemented behind `--speakers` (default off); threshold 0.45 is a
+placeholder until T-SPK-1. Model revision pinned after first download.

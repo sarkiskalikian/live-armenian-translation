@@ -43,6 +43,11 @@ clock would look the same).
 | E2 | Beam 1 vs 4 | laptop-Windows | same meaning, beam 1 faster | done -> beam 1 |
 | E3 | ASR CTC vs RNN-T fp32 | laptop-Windows | -0.52 pt WER, not significant | done -> keep CTC |
 | T-LIVE-5 | Beam 1 in a live call | laptop-Windows | 0/34 over 5 s, max 1.46 s | done -> beam 1 kept |
+| T-LIVE-6 | Call with two remote people (dev recording) | laptop-Windows | 0/44 over 5 s, max 1.75 s | done |
+| T-INSP-1 | Where did missed speech go? (T-LIVE-6 files) | laptop-sandbox | Meet gates speech to digital silence | done |
+| T-SPK-0 | Speaker tracker logic | cloud | A->B->A = 1->2->1 with stub embeddings | done |
+| T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | - | pending labels + model |
+| T-LIVE-7 | Separate live call with --speakers | laptop-Windows | - | pending |
 
 ---
 
@@ -215,6 +220,39 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Decision:** keep beam 1 (D15 verified live: no line over budget, no new failure mode).
 - **Limitations:** quality not scored against references; single remote speaker; mic shortfall was small this session (0.992 vs 0.87-0.91 on 2026-10-30) - recorded under Open defects, not explained.
 - **Commit:** code d194c54; recorded in this commit.
+
+## T-LIVE-6 - Call with two remote people on one phone (2026-10-31 17:34)
+- **Question:** development recording for remote-speaker labels; also HY/EN and latency with beam 1.
+- **Environment:** laptop-Windows, Meet; remote side = Գարուն and her brother sharing one phone; brother far from the phone.
+- **Configuration:** commit 1b5ed69 defaults (beam 1, CTC), `--save-audio`. `logs/20261031-173439`.
+- **Measured:** 44 phrases (16 Me, 28 Remote); latency Me p50 1.22 s, max 1.75 s; Remote p50 1.06 s, max 1.52 s; 0 over 5 s; MT mean 0.43-0.48 s, ASR 0.06-0.07 s. Capture: Me 0.987 (6 unrecovered-lag events, 2.09 s), Remote 0.999.
+- **User's account:** felt fast; some speech missed - partly accent, partly microphones, partly other reasons; model working well overall.
+- **Speaker labels (user, partial):** clips 1-7 and 9-13 = A (Գարուն); clip 8 and 14-28 not yet labelled. User transcript corrections stored as references in `eval/t-live-6_speakers.jsonl` (10 confirmed, 2 unclear).
+- **Commit:** code 1b5ed69; labels 906f022.
+
+## T-INSP-1 - Capture gaps vs phrase detection vs recognition, T-LIVE-6 files
+- **Question:** for the missed speech in T-LIVE-6, what can the saved files attribute to capture, phrase detection or recognition?
+- **Environment:** laptop-sandbox - deterministic reading of the saved WAV/JSON files (no models, no timing; the same numbers on any OS).
+- **Configuration:** `tools/inspect_session.py logs/20261031-173439` (this commit). Writes `inspection.json` in the log folder.
+- **Measured:**
+  - Remote stream: delivered 0.9993, no unrecovered-lag events, no idle filling - our code inserted nothing into remote audio. Yet **all 28 Remote clips contain runs of exact digital zeros**: ~130-210 ms at the start and ~200 ms at the end of almost every clip, and mid-phrase runs in several (e.g. `00054.40_Remote` 468 ms at 0.72 s; `00109.15_Remote` 192 ms at 1.41 s). This digital silence comes from the call app (Meet's noise suppression / gating) before the audio reaches the laptop.
+  - Mic stream: 6 unrecovered-lag events (2.09 s) but **0 saved Me phrases contain exact-zero runs** - this time the aligner's inserted silence fell outside speech.
+  - Phrase onsets: 1 of 44 clips starts already at full level (possible clipped onset); 0 phrases cut at the 10 s maximum.
+- **Inferred:**
+  - Capture: on the remote side, parts of quiet/distant speech (the brother) were replaced by silence **by Meet**, so they never existed in our input. Our capture lost nothing measurable on that side.
+  - Phrase detection: no evidence of clipped onsets or forced cuts inside saved phrases. **Speech that the VAD never detected is not on disk** (only detected phrases are saved), so the files cannot show whether any speech was missed between phrases.
+  - Recognition: fragments such as «Հ մազերը» for «Ձեր մազերը» occur in clips whose start is Meet's digital silence followed by speech; whether the first consonant was gated by Meet or misrecognised cannot be separated from these files. Accent effects need the user's references.
+- **Limitations:** no continuous recording of the session exists; to measure detection misses, a full-session recording (m0_record.py alongside, or a save-everything option) would be needed.
+- **Commit:** this commit.
+
+## T-SPK-0 - Speaker tracker logic with stub embeddings
+- **Question:** does the online tracker give stable labels and follow its rules?
+- **Environment:** cloud; synthetic 256-d voice vectors (same voice cosine ~0.75, different ~0.0); stub ASR/MT in the worker.
+- **Configuration:** `livetrans/speakers.py` and `livetrans/pipeline.py` (this commit), threshold 0.45, min_embed 1.0 s, min_new 1.5 s, min_update 1.5 s.
+- **Measured:** A->B->A -> Speaker 1, 2, 1; three voices A,B,C,A,C,B -> 1,2,3,1,3,2; a 1.2 s clip of a new voice is not allowed to create a speaker; a short clip (< 1.0 s) inherits the previous remote label - including when another person said it (A 0.7 s after B -> "Speaker 2"); short matches do not move a centroid. In the worker: loopback lines labelled Speaker N, mic lines stay "Me", `spk` time reported; without `--speakers` output is unchanged ("Remote").
+- **Decision:** wire into the live program behind `--speakers` (default off until T-SPK-1 and T-LIVE-7 pass).
+- **Limitations:** logic only; real embeddings and thresholds untested.
+- **Commit:** this commit.
 
 ---
 
