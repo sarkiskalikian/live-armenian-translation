@@ -102,6 +102,10 @@ def main() -> int:
             startup["warmup_s"] = round(warm_up(asr, mt, args.warmup), 2)
             startup["warmup_mode"] = args.warmup
             if args.speakers:
+                if not any(models.SPK_DIR.glob("*.onnx")):
+                    print(f"ERROR: speaker model missing in {models.SPK_DIR}. Run: python -m livetrans.models "
+                          f"(or start with --no-speakers)")
+                    return 2
                 from livetrans.speakers import SpeakerTracker, WeSpeakerEmbedder
                 t = time.perf_counter()
                 embedder = WeSpeakerEmbedder(models.SPK_DIR)

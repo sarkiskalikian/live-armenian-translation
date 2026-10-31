@@ -45,8 +45,8 @@ MODELS = {
         repo="Wespeaker/wespeaker-voxceleb-resnet34-LM",
         revision="f0c48c298fd835726c27956a5d617bad7115627e",   # downloaded 2026-10-31, used in T-SPK-1
         dir=SPK_DIR, patterns=["voxceleb_resnet34_LM.onnx"],
-        sha256={"voxceleb_resnet34_LM.onnx": "7bb2f06e9df17cdf1ef14ee8a15ab08ed28e8d0ef5054ee135741560df2ec068"},
-        optional=True),
+        sha256={"voxceleb_resnet34_LM.onnx": "7bb2f06e9df17cdf1ef14ee8a15ab08ed28e8d0ef5054ee135741560df2ec068"}),
+        # core since speaker labels became the default (ac95aff)
     # --- optional / under evaluation (not used by the live program) ---
     "asr-rnnt": dict(  # same NVIDIA weights, RNN-T (transducer) head, fp32 files only
         repo="Vana-Labs/stt-fastconformer-armenian",
