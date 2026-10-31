@@ -117,6 +117,7 @@ def main() -> int:
         print(f"Log: {log_dir}   Listening... (Ctrl+C to stop)\n", flush=True)
 
         t0 = time.perf_counter()
+        t0_unix = time.time()          # wall clock of t0, to line up logs with other tools
         worker = Worker(asr, mt, t0, log_dir, save_audio=args.save_audio, speakers=speakers)
         worker.start()
         seg_kw = dict(min_silence_s=args.min_silence, max_speech_s=args.max_speech)
@@ -189,6 +190,7 @@ def main() -> int:
         summary = summarize(worker.stats)
         summary["capture"] = capture
         summary["startup"] = startup
+        summary["session_t0_unix"] = round(t0_unix, 3)
         summary["capture_problems"] = problems
         summary["settings"] = vars(args)
         (log_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")

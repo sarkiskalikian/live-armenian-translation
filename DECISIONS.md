@@ -142,6 +142,9 @@ speech; VoxCeleb-trained model, untested on Armenian telephony audio.
 Status: implemented behind `--speakers` (default off). Threshold: ~~0.45
 placeholder~~ superseded by T-SPK-1 -> **0.30** (0.25-0.35 found the correct
 2 speakers with 92.3 % agreement; >= 0.45 split one person into several).
-Embedding cost ~35 ms per phrase. Model pinned (f0c48c2, 1ffc892). Open:
-A -> B -> A at 0.30 and the separate live call (T-LIVE-7) before turning it on
-by default.
+Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, 1ffc892).
+A -> B -> A at 0.30: PASS on real clips (T-SPK-1). A second real remote person
+is not available now (user, 18:58), so the separate live validation uses
+held-out recordings played into the loopback (T-SPK-2) instead of T-LIVE-7;
+a real two-person call remains part of the final acceptance test. Turned on by
+default only if T-SPK-2 passes.

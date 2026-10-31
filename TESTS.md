@@ -46,8 +46,9 @@ clock would look the same).
 | T-LIVE-6 | Call with two remote people (dev recording) | laptop-Windows | 0/44 over 5 s, max 1.75 s | done |
 | T-INSP-1 | Where did missed speech go? (T-LIVE-6 files) | laptop-sandbox | Meet gates speech to digital silence | done |
 | T-SPK-0 | Speaker tracker logic | cloud | A->B->A = 1->2->1 with stub embeddings | done |
-| T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | 2 speakers found at 0.25-0.35, 92.3 % agreement; A->B->A PASS at 0.45 | done -> threshold 0.30 |
-| T-LIVE-7 | Separate live call with --speakers | laptop-Windows | - | pending |
+| T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | 2 speakers found at 0.25-0.35, 92.3 % agreement; A->B->A PASS at 0.30 | done -> threshold 0.30 |
+| T-LIVE-7 | Separate live call, two real remote people, --speakers | laptop-Windows | - | not possible now (no second remote person available) |
+| T-SPK-2 | Live --speakers on held-out audio played into the loopback | laptop-Windows | - | pending |
 
 ---
 
@@ -271,10 +272,18 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 | 0.60 / 0.65 | 92.3 % | 8 |
 
   - At 0.30 the two errors are clip 8 (B, 1.35 s, too short to found a speaker -> given Speaker 1) and clip 10 (A, 1.6 s, audio "not clear" per user) - **clip 10 founded Speaker 2**, which B's clips 14, 15, 26 then joined. Clip 19 (echoed own voice) -> Speaker 1.
-  - A -> B -> A (clips 00008.26 A, 00083.07 B, 00104.67 A) at threshold 0.45: **PASS** (Speaker 1, 2, 1).
+  - A -> B -> A (clips 00008.26 A, 00083.07 B, 00104.67 A): **PASS** (Speaker 1, 2, 1) at 0.45 (18:28) and at **0.30** (re-run 18:58; embedding median 42 ms, max 109 ms; sweep identical).
 - **Decision:** default threshold 0.30 (middle of the range that found the right number of speakers; 0.45 and above split one person into several). Speaker labels stay behind `--speakers` until the separate live call (T-LIVE-7).
-- **Limitations:** threshold tuned on the same clips it is scored on (no held-out data); B has only 4 clips, all far from the phone; "agreement" maps each tracker speaker to its majority label, so it hides fragmentation (use "speakers created" too); same- and different-speaker similarities overlap (Meet-processed audio lowers same-speaker similarity), so two similar voices may merge at 0.30; the A -> B -> A check was run at 0.45, not yet at 0.30.
+- **Limitations:** threshold tuned on the same clips it is scored on (no held-out data); B has only 4 clips, all far from the phone; "agreement" maps each tracker speaker to its majority label, so it hides fragmentation (use "speakers created" too); same- and different-speaker similarities overlap (Meet-processed audio lowers same-speaker similarity), so two similar voices may merge at 0.30. ~~A -> B -> A not yet run at 0.30~~ done (PASS).
 - **Commit:** labels 5454b11; threshold change in this commit.
+
+## T-SPK-2 - Live --speakers on held-out audio played into the loopback (PENDING)
+- **Question:** on audio never used for tuning, does the live program (capture -> VAD -> speaker -> ASR -> MT) keep two readers apart, give A -> B -> A = Speaker 1 -> 2 -> 1, and stay within 5 s with the speaker step on?
+- **Why this test:** a second real remote person is not available (user, 2026-10-31 18:58), so T-LIVE-7 cannot be run now.
+- **Environment:** laptop-Windows; no call - `tools/play_speakers.py` plays into the Buds output, the live program records its loopback.
+- **Configuration:** live program with `--speakers` (threshold 0.30); played sequence A B A B B A A B A B, 1.5 s gaps; A = longest FEMALE FLEURS test clip (29.0 s, one reader), B = longest MALE clip (30.9 s, one reader), each cut into 5 pieces at quiet points, normalised to peak 0.3. Ground truth = play times (wall clock) matched to `session_t0_unix`. Scored by `tools/score_playback.py`.
+- **Logic check (cloud, synthetic):** piece cutting covers the whole clip and cuts in the quiet gaps; the scorer matches phrases to pieces by overlap, counts unmatched phrases and pieces without any phrase, reports agreement, speakers created, A -> B -> A and latency.
+- **Limitations (known in advance):** not a real call (no Meet noise suppression/codec); female vs male is easier than two similar voices; FLEURS is read speech; one reader per label guaranteed only because each label is a single recording.
 
 ---
 
