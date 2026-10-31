@@ -2,9 +2,9 @@
  "input": "eval\\t-live-6_speakers.jsonl",
  "clips": 28,
  "embedded": 25,
- "embed_ms_median": 35,
- "embed_ms_max": 104,
- "load_s": 0.63,
+ "embed_ms_median": 42,
+ "embed_ms_max": 109,
+ "load_s": 0.55,
  "cos_same": [
   0.44111719727516174,
   0.5357580184936523,
@@ -961,7 +961,7 @@
    0.017260808497667313,
    0.5544337034225464
   ],
-  "threshold": 0.45
+  "threshold": 0.3
  },
  "tracker": {
   "min_embed_s": 1.0,
