@@ -42,7 +42,7 @@ clock would look the same).
 | E1 | Warm-up minimal vs representative | laptop-Windows | no gain; keep minimal | done |
 | E2 | Beam 1 vs 4 | laptop-Windows | same meaning, beam 1 faster | done -> beam 1 |
 | E3 | ASR CTC vs RNN-T fp32 | laptop-Windows | -0.52 pt WER, not significant | done -> keep CTC |
-| T-LIVE-5 | Beam 1 in a live call | laptop-Windows | - | pending |
+| T-LIVE-5 | Beam 1 in a live call | laptop-Windows | 0/34 over 5 s, max 1.46 s | done -> beam 1 kept |
 
 ---
 
@@ -198,16 +198,28 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Limitations:** FLEURS is clean read Eastern Armenian; the call set is too small and one RNN-T "error" is a reference spelling artefact («դու՞ւք»). Karpov et al. (motivation, not proof) report RNN-T-only numbers.
 - **Commit:** pins 270fea2; recorded and RNN-T pinned in cdb7cca.
 
-## T-LIVE-5 - Beam 1 in a short live call (PENDING)
-- **Question:** with beam 1 as default, are HY/EN lines and latency at least as good as T-LIVE-4?
-- **Environment:** laptop-Windows, Meet, two people, ~2 min.
-- **Configuration:** commit d194c54 defaults (beam 1, CTC, warm-up minimal, 20 ms buffer).
-- **Status:** not run yet.
+## T-LIVE-5 - Beam 1 in a short live call (2026-10-31 17:23)
+- **Question:** with beam 1 as default, are HY/EN lines and latency acceptable live?
+- **Environment:** laptop-Windows, Meet, two people (same remote person as T-LIVE-4), 140.9 s.
+- **Configuration:** commit bdc9c97 (code = d194c54 defaults): beam 1, CTC, warm-up minimal, ASR threads default, 20 ms buffer, min-silence 0.5 s, `--save-audio`. `logs/20261031-172334`.
+- **Measured:**
+  - 34 phrases (18 Me, 16 Remote); 0 processing failures; max queue depth 1.
+  - Latency Me p50 0.98 s, p95 1.30 s, max 1.46 s; Remote p50 0.99 s, p95 1.29 s, max 1.31 s; **0 of 34 over 5 s**, first phrase 1.46 s.
+  - Mean parts: VAD wait 0.52-0.61 s, queue 0.00-0.02, ASR 0.06 s, MT 0.37-0.41 s.
+  - Start-up (separate from live latency): load 8.08 s, warm-up 0.89 s.
+  - Capture: Me delivered 0.992 (2 unrecovered-lag events, 0.71 s); Remote 0.997.
+  - Min-letters rule seen live: «Հ։» not translated. «Հ հ։» (2 letters) -> "What is it?", «Սովհ։» -> "I'm not sure.", «Հովհ։» -> "John, you know?" still translated (known limitation, D12).
+  - Short reply «Այո։» was translated as "I did." (should be "Yes.").
+- **Comparison with T-LIVE-4 (beam 4, 2026-10-30):** MT mean 0.37-0.41 vs 0.70-0.80 s; latency p50 ~1.0 vs 1.70-1.97 s; max 1.46 vs 5.32 s. **Not a one-variable comparison:** different conversation, different day, and ASR time also fell (0.06 vs 0.34-0.49 s) although ASR settings were unchanged, so part of the gain is machine/session state. E2 (same inputs) attributes ~50 ms per short phrase to beam 1.
+- **Quality (assistant's reading, not user-referenced):** most wrong lines start with wrong Armenian (e.g. «Առեւ ձեզ» for «Բարեւ ձեզ» -> "Without you"); translation errors on apparently correct Armenian include «Այո» -> "I did.", «Պար չեմ գնում» -> "...not going for money", "...you're a program". No beam 4 output exists for these lines, so beam cannot be blamed or cleared for them.
+- **Decision:** keep beam 1 (D15 verified live: no line over budget, no new failure mode).
+- **Limitations:** quality not scored against references; single remote speaker; mic shortfall was small this session (0.992 vs 0.87-0.91 on 2026-10-30) - recorded under Open defects, not explained.
+- **Commit:** code d194c54; recorded in this commit.
 
 ---
 
 ## Open defects and paused work
-- **Mic frame shortfall - PAUSED, UNRESOLVED.** Mic delivers ~7-16 % fewer frames than expected in every test since 21:13; cause unknown. Not the sole cause: model load (T-LIVE-2), pipeline processing (T-REC-2). Ready but not run: callback-log analysis (eafc972), T-REC-3 (recorder with Meet closed). Mitigation flags (D10) untested.
+- **Mic frame shortfall - PAUSED, UNRESOLVED.** Mic delivered ~7-16 % fewer frames than expected in every test from 2026-10-30 21:13 to 22:15; on 2026-10-31 17:23 (T-LIVE-5) it delivered 0.992 with the same settings. Time-varying, consistent with H3 (environment) but cause unknown. Not the sole cause: model load (T-LIVE-2), pipeline processing (T-REC-2). Ready but not run: callback-log analysis (eafc972), T-REC-3 (recorder with Meet closed). Mitigation flags (D10) untested.
 - **Zero insertion mid-speech (found 2026-10-31).** `00053.76_Me.wav` contains 391 ms of exact digital zeros at 0.69 s: the aligner's re-anchoring after an unrecovered-lag event (D7) inserts the whole correction as one hole at detection time, here inside a word. Proposed fix (not made): correct timestamps by an offset instead of inserting audio. Remote clips' exact-zero runs (0.1-0.17 s) are Meet's own digital silence.
 
 ## Proposed, not tested

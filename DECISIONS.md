@@ -104,12 +104,13 @@ met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: cdb7cca.
 phrase within ~0.07 s of warm; "representative" +2 s start-up, no gain).
 Start-up is reported separately from live latency. Beam: **beam 1**
 (E2: same meaning as beam 4 on 5 corrected call phrases, 203.5 vs 256.0 ms;
-T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Status: warm-up closed; beam 1
-active since d194c54, **pending live verification (T-LIVE-5)**.
+T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Live check T-LIVE-5: 34 phrases,
+0 over 5 s, max 1.46 s, MT mean 0.37-0.41 s. Status: closed - warm-up
+"minimal" and beam 1 are the defaults (d194c54).
 Commits: a2a792a, 9eb54c5, d194c54.
 
 **D16 - Final model pipeline.** Silero VAD -> FastConformer-hy CTC (fp32)
--> NLLB-200 600M int8, beam 1. Status: active, subject to T-LIVE-5.
+-> NLLB-200 600M int8, beam 1. Status: active; verified live in T-LIVE-5.
 
 **D17 - NLLB-200 distilled 1.3B: proposed, not tested.** Candidate for the
 place-name errors in E2. No measurement exists; no quality or speed claim is
@@ -119,6 +120,6 @@ made. Deferred (user, 2026-10-31). Status: proposed, not tested.
 expansion (10 unconfirmed rows) and further dataset work, own-voice test,
 mic shortfall investigation (D10), zero-insertion fix (D7).
 
-**D19 - Next priorities (user, 2026-10-31):** (1) verify beam 1 in a short
-live call (T-LIVE-5); (2) remote-speaker labels ("Speaker 1/2/..."); (3)
+**D19 - Next priorities (user, 2026-10-31):** (1) ~~verify beam 1 in a short
+live call~~ done (T-LIVE-5); (2) remote-speaker labels ("Speaker 1/2/..."); (3)
 final acceptance test against the brief. Status: open.
