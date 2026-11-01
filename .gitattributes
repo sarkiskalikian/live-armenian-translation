@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.wav binary
 *.onnx binary
+
+# chat exports: store byte-for-byte, no line-ending conversion
+chats/** -text
