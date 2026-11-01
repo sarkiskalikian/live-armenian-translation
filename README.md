@@ -225,7 +225,19 @@ the VAD waits for before it ends a phrase.
 
 - **Recognition on real calls is the weak part.** Read speech is about 12 %
   WER. On calls, accents, distance from the mic, Bluetooth mics and Meet's
-  noise suppression make it noticeably worse, plus the influence of my western armenian accent. 
+  noise suppression make it noticeably worse. Wrong Armenian gives wrong English.
+- **My accent.** My native Armenian is Western Armenian, while the recognition
+  model and the test sets I measured on (FLEURS, ArmBench) are Eastern Armenian.
+  During my tests my Western-influenced pronunciation caused extra recognition
+  errors. I did not measure how much.
+- **Hardware.** Everything was built and measured on one mid-range laptop:
+  i5-13500H, 8 GB RAM, no usable GPU. To fit the 5 s budget on this CPU, with
+  the call app running at the same time, I chose small CPU models (FastConformer
+  115M, NLLB 600M int8) over larger ones that might be more accurate (NLLB 1.3B,
+  Whisper large). The latency numbers apply to this laptop only.
+- **Time.** The brief allows about 20 hours, so testing is limited: a few real
+  calls, two remote voices and 14 checked call phrases for WER. Several
+  alternatives were chosen from public benchmarks and not run myself.
 - **Meet removes quiet speech.** Meet replaces quiet or distant speech with
   digital silence before it reaches the laptop, so that speech never arrives
   (T-INSP-1).
