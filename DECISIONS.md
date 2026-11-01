@@ -22,7 +22,7 @@ Labels: "Me" (mic); remote phrases "Speaker 1", "Speaker 2", ... by voice (D20).
 **D1 - System audio via WASAPI loopback (PyAudioWPatch).**
 Why: Windows exposes a loopback twin of each output device, so no virtual
 cable is needed and the user still hears the call. Evidence: T-M0-1.
-Status: active. Commit: e7817a9.
+Status: active. Commit: 4c6bb5d.
 
 **D2 - Microphone = laptop array `[14]`, not the Buds' mic.**
 Why: opening the Buds' "Headset" mic switches them to the hands-free profile,
@@ -37,14 +37,14 @@ WER 11.92 % (95 % CI 9.75-14.22), CER 5.00 %, 0.145 s per 11.7 s clip on
 the laptop. ~~"Not benchmarked locally"~~ superseded by E3. Known risks:
 conversational audio (ArmBench movies ~61 % WER; our 4 call clips 23.8 %),
 read Eastern Armenian training data, own-voice accent untested.
-Status: active, confirmed by the user 2026-10-31. Commit: pinned in 270fea2.
+Status: active, confirmed by the user 2026-10-31. Commit: pinned in 692d014.
 
 **D4 - MT: NLLB-200 distilled 600M, int8 CTranslate2 (third-party conversion,
 pinned), Meta's SentencePiece model.**
 Why: ~1 GB RAM, chrF 61-62 on clean FLEURS (T-MT-1). Licence CC-BY-NC (fine
 for this challenge). ~~"Beam 4 is the current default"~~ superseded by D15
 (beam 1). Known limitation: place names (E2: «Երեւանում» dropped,
-«Վանաձոր» -> "Vancouver"). Status: active. Commit: pinned in 270fea2.
+«Վանաձոր» -> "Vancouver"). Status: active. Commit: pinned in 692d014.
 
 **D5 - Phrase segmentation: Silero VAD frame by frame (32 ms), state carried;
 0.5 s silence ends a phrase; 10 s maximum.** Latency is measured from the end
@@ -64,7 +64,7 @@ not made: offset timestamps instead of inserting audio.
 
 **D8 - Errors are reported, not hidden.** Lines over 5 s, frame shortfalls,
 PortAudio overflows, stalled devices and exceptions are printed live and
-listed in the summary. Status: active. Commits: 8733145 (wording).
+listed in the summary. Status: active. Commits: 2b1cebf (wording).
 
 **D9 - Skip the 100-clip ASR benchmark and own-voice reading test**
 (user, 2026-10-30), to build the walking skeleton first.
@@ -73,7 +73,7 @@ Own-voice test: still not run.
 
 **D10 - Debug the mic frame shortfall one variable at a time.** Three
 mitigations (ASR thread cap / no spinning, OMP passive, 50 ms buffer) were
-made switchable, default = T-LIVE-1 configuration (b72c767). T-LIVE-2 and
+made switchable, default = T-LIVE-1 configuration (03c8fb5). T-LIVE-2 and
 T-REC-2 then showed the shortfall without models or pipeline work.
 Status: paused, unresolved (user, 2026-10-30 22:14); flags exist, untested.
 
@@ -83,7 +83,7 @@ open. Status: active.
 **D12 - Minimum-letters rule is a translation guard, not a quality score.**
 Text with < 2 Armenian letters is not sent to NLLB (it invents sentences).
 Short replies «այո», «ոչ», «հա», «չէ» stay translatable. Evidence: T-OFF-1.
-Status: active; not yet seen live. Commit: 86a44f3.
+Status: active; not yet seen live. Commit: cfc291a.
 
 **D13 - Pin everything a result depends on; report only laptop-Windows
 numbers.** Model files by Hugging Face commit + sha256, packages by exact
@@ -93,7 +93,7 @@ laptop's Windows environment; the sandbox is used only to edit files and run
 git. Clarified 2026-10-31: deterministic reading of saved files (no models,
 no timing, identical output on any OS - e.g. T-INSP-1) may run there and is
 labelled laptop-sandbox; anything with models or timing runs in Windows.
-Status: active. Commits: 270fea2, cdb7cca.
+Status: active. Commits: 692d014, 02a3617.
 
 **D14 - ASR head: keep CTC (E3).** Motivation for testing RNN-T: Karpov et
 al., Interspeech 2025, Section 3 (hybrid FastConformer trained with RNN-T and
@@ -101,7 +101,7 @@ CTC decoders; RNN-T described as generally better) and Tables 1-2
 (RNN-T-only WER). Motivation, not proof. Outcome: RNN-T fp32 -0.52 WER
 points on FLEURS, 95 % CI -1.28 .. +0.26, p = 0.15, ~5x slower; not better
 on 4 call clips. Decision: keep CTC; RNN-T int8 not tested (precondition not
-met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: cdb7cca.
+met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: 02a3617.
 
 **D15 - Warm-up and beam by measurement.** Warm-up: keep "minimal" (E1: first
 phrase within ~0.07 s of warm; "representative" +2 s start-up, no gain).
@@ -109,8 +109,8 @@ Start-up is reported separately from live latency. Beam: **beam 1**
 (E2: same meaning as beam 4 on 5 corrected call phrases, 203.5 vs 256.0 ms;
 T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Live check T-LIVE-5: 34 phrases,
 0 over 5 s, max 1.46 s, MT mean 0.37-0.41 s. Status: closed - warm-up
-"minimal" and beam 1 are the defaults (d194c54).
-Commits: a2a792a, 9eb54c5, d194c54.
+"minimal" and beam 1 are the defaults (003ceaf).
+Commits: d1df237, 73f35a3, 003ceaf.
 
 **D16 - Final model pipeline.** Silero VAD -> [loopback only: WeSpeaker
 ResNet34 speaker label] -> FastConformer-hy CTC (fp32) -> NLLB-200 600M int8,
@@ -143,7 +143,7 @@ speech; VoxCeleb-trained model, untested on Armenian telephony audio.
 Status: implemented behind `--speakers` (default off). Threshold: ~~0.45
 placeholder~~ superseded by T-SPK-1 -> **0.30** (0.25-0.35 found the correct
 2 speakers with 92.3 % agreement; >= 0.45 split one person into several).
-Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, 1ffc892).
+Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, 95b0cd4).
 A -> B -> A at 0.30: PASS on real clips (T-SPK-1). A second real remote person
 is not available now (user, 18:58), so the separate live validation uses
 held-out recordings played into the loopback (T-SPK-2) instead of T-LIVE-7;
