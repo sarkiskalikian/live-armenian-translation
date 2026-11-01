@@ -28,7 +28,7 @@ Windows only (see Limitations).
 Requirements: Windows 10/11, Python 3.13, about 1.1 GB of disk for the models.
 
 ```powershell
-git clone <this repository>
+git clone https://github.com/sarkiskalikian/live-armenian-translation.git
 cd live-armenian-translation
 py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
