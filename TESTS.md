@@ -5,7 +5,7 @@ outcome, decision, limitations, commit**. "Measured" = read from logs,
 recordings or result files; anything inferred is labelled as such.
 Conclusions overturned by later tests are kept and marked **SUPERSEDED**.
 
-> **Note on commit IDs (2026-11-01):** the Git history was rewritten once to change commit metadata (committer and trailer lines); file contents and commit messages were not changed. The commit IDs in this file and in `DECISIONS.md` have been updated to the rewritten history. The chat transcripts in `chats/` were exported before the rewrite and are unedited, so they show the earlier IDs.
+> **Note on commit IDs (2026-11-01):** the Git history was rewritten once. The rewrite removed the Claude attribution lines ("Co-Authored-By: Claude" and "Claude-Session: ...") from the commit messages and set me as committer; file contents and the rest of each commit message are unchanged. The commit IDs in this file and in `DECISIONS.md` have been updated to the rewritten history. The chat transcripts in `chats/` were exported before the rewrite and are unedited, so they show the earlier IDs.
 
 **Environments**
 - **[laptop-Windows]** - the target laptop: Windows 11, Intel i5-13500H

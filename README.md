@@ -235,7 +235,7 @@ the VAD waits for before it ends a phrase.
   the call app running at the same time, I chose small CPU models (FastConformer
   115M, NLLB 600M int8) over larger ones that might be more accurate (NLLB 1.3B,
   Whisper large). The latency numbers apply to this laptop only.
-- **Time.** The brief allows about 20 hours, so testing is limited: a few real
+- **Time.** The brief expects about 20 hours of work, so testing is limited: a few real
   calls, two remote voices and 14 checked call phrases for WER. Several
   alternatives were chosen from public benchmarks and not run myself.
 - **Meet removes quiet speech.** Meet replaces quiet or distant speech with

@@ -37,13 +37,13 @@ Two kinds of evidence are kept apart:
 
 | # | Requirement | Status | Evidence |
 |---|---|---|---|
-| C1 | Git repository link | **FAIL** | Local git only, no remote yet |
+| C1 | Git repository link | **PASS** | https://github.com/sarkiskalikian/live-armenian-translation (private; reviewers need access) |
 | C2 | Source code | **PASS** | `livetrans/` (audio, segmenter, asr, translate, speakers, pipeline), `tools/` |
 | C3 | README: setup and run, incl. audio device setup | **PASS** | README sections 1-3 |
 | C4 | README: models chosen, alternatives, why | **PASS** | README section 5 |
 | C5 | README: how the pieces fit together | **PASS** | README section 4 |
 | C6 | README: known limitations, what to improve | **PASS** | README sections 7-8 |
-| C7 | `chats/`: every AI session, full and unedited, one `.md` per session | **FAIL** | Not exported yet - only the user can export from the app |
+| C7 | `chats/`: every AI session, full and unedited, one `.md` per session | **One session submitted** | `chats/challenge-requirements-and-plan.md`, exported in full and unedited |
 | C8 | No model weights, audio recordings or API keys committed | **PASS** | 49 tracked files, largest 76 KB; no audio/model files in the tree or in history; no key-like strings (re-checked 2026-11-01). `results/*.jsonl` and `eval/*.jsonl` contain transcribed text only |
 
 ## D. What the interviewers will look at live ("How we evaluate" - Live result)
