@@ -225,8 +225,7 @@ the VAD waits for before it ends a phrase.
 
 - **Recognition on real calls is the weak part.** Read speech is about 12 %
   WER. On calls, accents, distance from the mic, Bluetooth mics and Meet's
-  noise suppression make it noticeably worse. My own Western-influenced
-  pronunciation was not tested separately. Wrong Armenian gives wrong English.
+  noise suppression make it noticeably worse, plus the influence of my western armenian accent. 
 - **Meet removes quiet speech.** Meet replaces quiet or distant speech with
   digital silence before it reaches the laptop, so that speech never arrives
   (T-INSP-1).
