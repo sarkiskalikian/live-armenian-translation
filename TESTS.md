@@ -49,6 +49,7 @@ clock would look the same).
 | T-SPK-1 | Speaker labels on real T-LIVE-6 clips | laptop-Windows | 2 speakers found at 0.25-0.35, 92.3 % agreement; A->B->A PASS at 0.30 | done -> threshold 0.30 |
 | T-LIVE-7 | Separate live call, two real remote people, --speakers | laptop-Windows | - | not possible now (no second remote person available) |
 | T-SPK-2 | Live --speakers on held-out audio played into the loopback | laptop-Windows | 11/11 phrases correct, 2 speakers, A->B->A PASS, max 1.94 s | done -> speakers on by default |
+| T-LIVE-8 | Real call acceptance run, two remote people, defaults | laptop-Windows | 0/45 over 5 s, max 2.37 s; 2 remote speakers; labels judged correct by user, not scored per phrase | done |
 
 ---
 
@@ -293,6 +294,24 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Decision:** speaker labels on by default (`--no-speakers` restores "Remote").
 - **Limitations:** not a real call - no Meet noise suppression or codec; on Meet audio (T-SPK-1) same-speaker similarity was much lower (mean 0.34 vs 0.80-0.91 here), so real calls will be harder. Female vs male is easier than two similar voices. Each label is one recording, so speaker identity is certain but voices did not change between pieces. Read speech. Two speakers only. An earlier play run (`results/play_20261031-192013.json`) has no scored session and is not used.
 - **Commit:** results and default change in this commit.
+
+---
+
+## T-LIVE-8 - Real-call acceptance run, two remote people (2026-11-01 17:46)
+- **Question:** in a real Google Meet call with two people on the remote side, does the default program show time, label, HY and EN for each phrase, label the mic "Me", keep the two remote people apart, and stay within 5 s?
+- **Environment:** laptop-Windows; Google Meet; user on mic `[14]`, Buds output, loopback `[16]`.
+- **Configuration:** commit 3c91ec8 defaults: `python -m livetrans --mic 14 --loopback 16 --save-audio` (speakers on, threshold 0.30, beam 1, CTC, minimal warm-up). Files: `logs/20261101-174658` (not committed).
+- **Measured:**
+  - 183 s session; 45 phrases: 27 Me, 18 Remote; 0 processing failures; max queue depth 1.
+  - Latency (end of speech -> line): Me p50 1.67 / p95 2.13 / max 2.37 s; Remote p50 1.51 / p95 2.35 / max 2.37 s; **0 over 5 s**. Speaker step mean 0.07 s.
+  - Remote labels: Speaker 1 = 14 phrases, Speaker 2 = 4; order 1x9, 2x4, 1x5. Reasons: 2 new, 6 match, 1 no-new-best, 9 short-inherit.
+  - User judgement (2026-11-01): Me, Speaker 1 and Speaker 2 identified correctly; recognition of words often wrong (accent, mics, Meet). Per-phrase speaker labels were not given, so agreement was not scored (template `eval/t-live-8_speakers.jsonl` left unfilled).
+  - 5 lines untranslated (< 2 Armenian letters). Short replies mistranslated: «Այո» -> "I did.", «Ոչ» -> "No, I did not."
+  - 8 short Remote phrases began 0.3-0.6 s after the user's own speech: possibly the user's voice echoed from the remote side (not verified).
+  - Capture: Me delivered 95.8 %, 7.14 s unrecovered lag in 19 events (open defect); Remote 99.9 %, 0 events. Start-up (not live latency): load 10.0 s, warm-up 1.2 s, speaker model 0.4 s.
+- **Decision:** no change; defaults kept.
+- **Limitations:** speaker correctness rests on the user's overall judgement, not per-phrase scoring; 9 of 18 remote phrases inherited their label as short phrases; Speaker 2 had only 4 phrases; one call.
+- **Commit:** recorded in the README commit.
 
 ---
 

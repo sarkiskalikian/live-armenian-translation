@@ -1,10 +1,11 @@
-"""Live Armenian -> English transcription of a call (walking skeleton).
+"""Live Armenian -> English transcription of a call.
 
   python -m livetrans --list-devices
   python -m livetrans --mic 14 --loopback 16
   python -m livetrans --mic 14 --loopback 16 --save-audio     # also keep each segment as WAV
 
-Sources are labelled "Me" (microphone) and "Remote" (system audio). Each line
+Microphone phrases are labelled "Me"; system-audio phrases "Speaker 1", "Speaker 2", ...
+(or "Remote" with --no-speakers). Each line
 shows the Armenian recognition AND the English translation, plus where the
 latency went. Ctrl+C prints a summary. A log of the session (text + timings)
 goes to logs/<timestamp>/ (git-ignored).
