@@ -5,7 +5,7 @@ outcome, decision, limitations, commit**. "Measured" = read from logs,
 recordings or result files; anything inferred is labelled as such.
 Conclusions overturned by later tests are kept and marked **SUPERSEDED**.
 
-> **Note on commit IDs (2026-11-01):** the Git history was rewritten once. The rewrite removed the Claude attribution lines ("Co-Authored-By: Claude" and "Claude-Session: ...") from the commit messages and set me as committer; file contents and the rest of each commit message are unchanged. The commit IDs in this file and in `DECISIONS.md` have been updated to the rewritten history. The chat transcripts in `chats/` were exported before the rewrite and are unedited, so they show the earlier IDs.
+> **Note on commit IDs (2026-11-01):** the Git history was rewritten after the chat export. The commit IDs in this file and in `DECISIONS.md` have been updated to the rewritten history; the chat transcripts in `chats/` are unedited, so they show the earlier IDs.
 
 **Environments**
 - **[laptop-Windows]** - the target laptop: Windows 11, Intel i5-13500H
@@ -151,16 +151,16 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Question:** do the installed files and packages match the pins?
 - **Environment:** laptop-Windows (to be run); model-file hashes were checked against the laptop's files on 2026-10-30 (all four OK; RNN-T files OK after download).
 - **Status:** the Windows `--verify` output has not been reported. Package versions were read from the `.venv` dist-info folders.
-- **Commit:** pins in 692d014; RNN-T pin in 02a3617.
+- **Commit:** pins in 692d014; RNN-T pin in 109c5bd.
 
 ## E1 - Warm-up: minimal vs representative (2026-10-31 ~00:37)
 - **Question:** does a more representative warm-up remove first-phrase slowness?
 - **Environment:** laptop-Windows.
-- **Configuration:** commit e69ed47, `tools/warmup_check.py`, 3 fresh processes per mode, alternating; beam 4; clips T-LIVE-4 Remote 00019.81 / 00037.95 / 00070.08. `results/warmup_check.json`.
+- **Configuration:** commit e69ed47, `tools/warmup_check.py`, 3 fresh processes per mode, alternating; beam 4; clips T-LIVE-4 Remote 00019.81 / 00037.95 / 00070.08.
 - **Measured (medians, ASR / MT s):** minimal: load 6.03, warm-up 1.11, clip1 first 0.131 / 0.629, clip1 again 0.065 / 0.571. Representative: load 8.88, warm-up 3.16, clip1 first 0.183 / 0.689, clip1 again 0.058 / 0.506. One run per mode was slow on every step (machine-wide slowdown).
 - **Decision:** keep "minimal" (default unchanged).
 - **Limitations:** 3 runs per mode; measured with beam 4 (live default now beam 1); quiet laptop, not during a call.
-- **Commit:** code e69ed47; recorded in d1df237.
+- **Commit:** code e69ed47; recorded in d46bbcf.
 
 ## Call references (2026-10-31 00:59-01:13)
 `eval/t-live-4_refs.jsonl`, user (native speaker) listened to each clip; unclear words were asked about before confirming.
@@ -174,21 +174,21 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 | 00095.46_Remote | Մեր մոտ ժամը տաս տասնհինգ անց։ | ... տ տասնհինգ անց | 1/6 |
 
 00049.31 was first confirmed as recognised (01:02); **SUPERSEDED** at 01:13 (first word «Ես»). Open: whether «գարուն» is a name («Գարուն»); the reference keeps the recogniser's spelling «դու՞ւք» (affects E3 calls scoring). 10 other Remote rows unconfirmed.
-- **Commits:** 82933d9, 8e5f3b3, 585b0e7, 73f8507, 83565e4, 7048ce5.
+- **Commits:** 7567703, 9da5219, 83c3ce5, 5ac81c0, 3a4375e, 5cf5a16.
 
 ## E2 - Beam 1 vs beam 4 on 5 call phrases (2026-10-31 01:14)
 - **Question:** does beam 1 keep translation quality while lowering latency?
 - **Environment:** laptop-Windows.
-- **Configuration:** commit e69ed47 tool, refs 7048ce5, `tools/beam_check.py`; NLLB-600M int8, 4 threads; each translation timed as median of 5 after warm-up; inputs = corrected Armenian and live ASR output. `results/beam_check.json`.
+- **Configuration:** commit e69ed47 tool, refs 5cf5a16, `tools/beam_check.py`; NLLB-600M int8, 4 threads; each translation timed as median of 5 after warm-up; inputs = corrected Armenian and live ASR output.
 - **Measured:** median 203.5 ms (b1) vs 256.0 ms (b4); identical English in 6/10, in 4/5 on corrected Armenian. Corrected-Armenian outputs (b1 = b4 unless shown): "It's nice. My name is Spring." / "I'm coming, are you?" (Yerevan lost) / "I'm from Vancouver." / "I'm in clinical trials." / b1 "We're about 10:15 in the morning." vs b4 "It's about 10:15 in the morning."
-- **Decision:** switch the live default to beam 1 (003ceaf), pending T-LIVE-5.
+- **Decision:** switch the live default to beam 1 (040b505), pending T-LIVE-5.
 - **Limitations:** 5 phrases cannot detect small quality differences; English judged by the assistant, user may correct; place-name errors (Երեւանում, Վանաձոր) occur with both beams.
-- **Commit:** recorded in 73f35a3; default changed in 003ceaf.
+- **Commit:** recorded in 8b8a230; default changed in 040b505.
 
 ## E3 - ASR head: CTC fp32 vs RNN-T fp32, same NVIDIA weights (2026-10-31 01:17)
 - **Question:** does the RNN-T head of the same model recognise better than our CTC export?
 - **Environment:** laptop-Windows.
-- **Configuration:** `tools/asr_compare.py` (commit e69ed47), refs 7048ce5; CTC = OpenVoiceOS export @ f7db1fa (model.onnx sha256 09ed4278...); RNN-T = Vana-Labs export @ ec92cef (encoder 541c3462..., decoder_joint 5bb91df1...); same onnx-asr 80-band preprocessing; default threads; one untimed warm-up clip; WER/CER after normalisation (case, punctuation, եւ/և); bootstrap 10,000 clip resamples. `results/asr_{ctc,rnnt}_{fleurs,calls}.json`.
+- **Configuration:** `tools/asr_compare.py` (commit e69ed47), refs 5cf5a16; CTC = OpenVoiceOS export @ f7db1fa (model.onnx sha256 09ed4278...); RNN-T = Vana-Labs export @ ec92cef (encoder 541c3462..., decoder_joint 5bb91df1...); same onnx-asr 80-band preprocessing; default threads; one untimed warm-up clip; WER/CER after normalisation (case, punctuation, եւ/և); bootstrap 10,000 clip resamples. `results/asr_{ctc,rnnt}_fleurs.json`.
 - **Measured, FLEURS (100 clips, 1930 words, 11.7 s average):**
 
 | | CTC fp32 | RNN-T fp32 |
@@ -205,12 +205,12 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Measured, calls (4 confirmed intact Remote clips, 21 words):** CTC 5 errors (23.8 %), RNN-T 7 (33.3 %).
 - **Decision:** keep CTC as the live model (confirmed by the user 2026-10-31); do not run RNN-T int8 (E4), since its precondition (RNN-T fp32 better) was not met. RNN-T stays pinned for a possible later comparison.
 - **Limitations:** FLEURS is clean read Eastern Armenian; the call set is too small and one RNN-T "error" is a reference spelling artefact («դու՞ւք»). Karpov et al. (motivation, not proof) report RNN-T-only numbers.
-- **Commit:** pins 692d014; recorded and RNN-T pinned in 02a3617.
+- **Commit:** pins 692d014; recorded and RNN-T pinned in 109c5bd.
 
 ## T-LIVE-5 - Beam 1 in a short live call (2026-10-31 17:23)
 - **Question:** with beam 1 as default, are HY/EN lines and latency acceptable live?
 - **Environment:** laptop-Windows, Meet, two people (same remote person as T-LIVE-4), 140.9 s.
-- **Configuration:** commit ac84017 (code = 003ceaf defaults): beam 1, CTC, warm-up minimal, ASR threads default, 20 ms buffer, min-silence 0.5 s, `--save-audio`. `logs/20261031-172334`.
+- **Configuration:** commit ce09ede (code = 040b505 defaults): beam 1, CTC, warm-up minimal, ASR threads default, 20 ms buffer, min-silence 0.5 s, `--save-audio`. `logs/20261031-172334`.
 - **Measured:**
   - 34 phrases (18 Me, 16 Remote); 0 processing failures; max queue depth 1.
   - Latency Me p50 0.98 s, p95 1.30 s, max 1.46 s; Remote p50 0.99 s, p95 1.29 s, max 1.31 s; **0 of 34 over 5 s**, first phrase 1.46 s.
@@ -223,16 +223,16 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 - **Quality (assistant's reading, not user-referenced):** most wrong lines start with wrong Armenian (e.g. «Առեւ ձեզ» for «Բարեւ ձեզ» -> "Without you"); translation errors on apparently correct Armenian include «Այո» -> "I did.", «Պար չեմ գնում» -> "...not going for money", "...you're a program". No beam 4 output exists for these lines, so beam cannot be blamed or cleared for them.
 - **Decision:** keep beam 1 (D15 verified live: no line over budget, no new failure mode).
 - **Limitations:** quality not scored against references; single remote speaker; mic shortfall was small this session (0.992 vs 0.87-0.91 on 2026-10-30) - recorded under Open defects, not explained.
-- **Commit:** code 003ceaf; recorded in this commit.
+- **Commit:** code 040b505; recorded in this commit.
 
 ## T-LIVE-6 - Call with two remote people on one phone (2026-10-31 17:34)
 - **Question:** development recording for remote-speaker labels; also HY/EN and latency with beam 1.
 - **Environment:** laptop-Windows, Meet; remote side = Գարուն and her brother sharing one phone; brother far from the phone.
-- **Configuration:** commit cf46dae defaults (beam 1, CTC), `--save-audio`. `logs/20261031-173439`.
+- **Configuration:** commit a4f0dfa defaults (beam 1, CTC), `--save-audio`. `logs/20261031-173439`.
 - **Measured:** 44 phrases (16 Me, 28 Remote); latency Me p50 1.22 s, max 1.75 s; Remote p50 1.06 s, max 1.52 s; 0 over 5 s; MT mean 0.43-0.48 s, ASR 0.06-0.07 s. Capture: Me 0.987 (6 unrecovered-lag events, 2.09 s), Remote 0.999.
 - **User's account:** felt fast; some speech missed - partly accent, partly microphones, partly other reasons; model working well overall.
 - **Speaker labels (user, partial):** clips 1-7 and 9-13 = A (Գարուն); clip 8 and 14-28 not yet labelled. User transcript corrections stored as references in `eval/t-live-6_speakers.jsonl` (10 confirmed, 2 unclear).
-- **Commit:** code cf46dae; labels d1ab6e0.
+- **Commit:** code a4f0dfa; labels 94efa1b.
 
 ## T-INSP-1 - Capture gaps vs phrase detection vs recognition, T-LIVE-6 files
 - **Question:** for the missed speech in T-LIVE-6, what can the saved files attribute to capture, phrase detection or recognition?
@@ -261,7 +261,7 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 ## T-SPK-1 - Speaker labels on the real T-LIVE-6 Remote clips (2026-10-31 18:28)
 - **Question:** do WeSpeaker embeddings + the online tracker separate the two remote people, at which threshold, and does A -> B -> A give Speaker 1 -> 2 -> 1?
 - **Environment:** laptop-Windows (Python 3.13.14, onnxruntime 1.31.1, onnx-asr 0.12.0).
-- **Configuration:** commit eb38598, `tools/speaker_check.py eval/t-live-6_speakers.jsonl`; WeSpeaker ResNet34-LM @ f0c48c2 (sha256 7bb2f06e...), 2 threads; tracker min_embed 1.0 s, min_new 1.5 s, min_update 1.5 s. Labels by the user (all 28 clips): A 22, B 4 (8, 14, 15, 26), excluded: 19 (user's own voice echoed via the remote phone) and 24 (B, "not clear"). `results/speaker_check_t-live-6_speakers.json`.
+- **Configuration:** commit 543be32, `tools/speaker_check.py eval/t-live-6_speakers.jsonl`; WeSpeaker ResNet34-LM @ f0c48c2 (sha256 7bb2f06e...), 2 threads; tracker min_embed 1.0 s, min_new 1.5 s, min_update 1.5 s. Labels by the user (all 28 clips): A 22, B 4 (8, 14, 15, 26), excluded: 19 (user's own voice echoed via the remote phone) and 24 (B, "not clear"). `results/speaker_check_t-live-6_speakers.json`.
 - **Measured:**
   - Embedding time per clip: median 35 ms, max 104 ms (25 of 28 clips >= 1.0 s embedded); model load 0.63 s.
   - Cosine similarity: same speaker n=196, mean 0.34 (p10 0.15, p90 0.53); different speakers n=80, mean 0.11 (p10 -0.01, p90 0.23, max 0.64). Same-speaker pairs below 0.30: 40 %; different-speaker pairs at or above 0.30: 7 %.
@@ -278,13 +278,13 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
   - A -> B -> A (clips 00008.26 A, 00083.07 B, 00104.67 A): **PASS** (Speaker 1, 2, 1) at 0.45 (18:28) and at **0.30** (re-run 18:58; embedding median 42 ms, max 109 ms; sweep identical).
 - **Decision:** default threshold 0.30 (middle of the range that found the right number of speakers; 0.45 and above split one person into several). Speaker labels stay behind `--speakers` until the separate live call (T-LIVE-7).
 - **Limitations:** threshold tuned on the same clips it is scored on (no held-out data); B has only 4 clips, all far from the phone; "agreement" maps each tracker speaker to its majority label, so it hides fragmentation (use "speakers created" too); same- and different-speaker similarities overlap (Meet-processed audio lowers same-speaker similarity), so two similar voices may merge at 0.30. ~~A -> B -> A not yet run at 0.30~~ done (PASS).
-- **Commit:** labels eb38598; threshold change in this commit.
+- **Commit:** labels 543be32; threshold change in this commit.
 
 ## T-SPK-2 - Live --speakers on held-out audio played into the loopback (2026-10-31 19:23)
 - **Question:** on audio never used for tuning, does the live program (capture -> VAD -> speaker -> ASR -> MT) keep two readers apart, give A -> B -> A = Speaker 1 -> 2 -> 1, and stay within 5 s with the speaker step on?
 - **Why this test:** a second real remote person is not available (user, 2026-10-31 18:58), so T-LIVE-7 could not be run.
 - **Environment:** laptop-Windows; no call. `tools/play_speakers.py --output 12` played into "Headphones (Sarkis's Buds3 Pro)"; the live program recorded its loopback `[16]`.
-- **Configuration:** commit 4c59e84; `python -m livetrans --mic 14 --loopback 16 --speakers --save-audio` (threshold 0.30, beam 1, CTC). Sequence A B A B B A A B A B, 1.5 s gaps. A = FLEURS `17253328370927182543.wav` (female, one reader), B = `303611548261574476.wav` (male, one reader), 5 pieces each (4.7-7.1 s), peak 0.3. Files: `logs/20261031-192300`, `results/play_20261031-192428.json`, `results/score_playback_20261031-192300.json`.
+- **Configuration:** commit 10bf5a7; `python -m livetrans --mic 14 --loopback 16 --speakers --save-audio` (threshold 0.30, beam 1, CTC). Sequence A B A B B A A B A B, 1.5 s gaps. A = FLEURS `17253328370927182543.wav` (female, one reader), B = `303611548261574476.wav` (male, one reader), 5 pieces each (4.7-7.1 s), peak 0.3. Files: `logs/20261031-192300`, `results/play_20261031-192428.json`, `results/score_playback_20261031-192300.json`.
 - **Measured:**
   - 11 Remote phrases, all matched to a played piece; 0 unmatched; every piece produced at least one phrase (B2 produced two).
   - Speakers created: 2; Speaker 1 = A, Speaker 2 = B; **agreement 11/11 (100 %)**; assignments: 2 new, 9 match.
@@ -302,7 +302,7 @@ Mic delivery over time (same device, 20 ms buffer): T-M0-1 20:18 **1.000**; T-LI
 ## T-LIVE-8 - Real-call acceptance run, two remote people (2026-11-01 17:46)
 - **Question:** in a real Google Meet call with two people on the remote side, does the default program show time, label, HY and EN for each phrase, label the mic "Me", keep the two remote people apart, and stay within 5 s?
 - **Environment:** laptop-Windows; Google Meet; user on mic `[14]`, Buds output, loopback `[16]`.
-- **Configuration:** commit 690d2f5 defaults: `python -m livetrans --mic 14 --loopback 16 --save-audio` (speakers on, threshold 0.30, beam 1, CTC, minimal warm-up). Files: `logs/20261101-174658` (not committed).
+- **Configuration:** commit cc62a91 defaults: `python -m livetrans --mic 14 --loopback 16 --save-audio` (speakers on, threshold 0.30, beam 1, CTC, minimal warm-up). Files: `logs/20261101-174658` (not committed).
 - **Measured:**
   - 183 s session; 45 phrases: 27 Me, 18 Remote; 0 processing failures; max queue depth 1.
   - Latency (end of speech -> line): Me p50 1.67 / p95 2.13 / max 2.37 s; Remote p50 1.51 / p95 2.35 / max 2.37 s; **0 over 5 s**. Speaker step mean 0.07 s.

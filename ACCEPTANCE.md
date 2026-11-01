@@ -44,7 +44,7 @@ Two kinds of evidence are kept apart:
 | C5 | README: how the pieces fit together | **PASS** | README section 4 |
 | C6 | README: known limitations, what to improve | **PASS** | README sections 7-8 |
 | C7 | `chats/`: every AI session, full and unedited, one `.md` per session | **One session submitted** | `chats/challenge-requirements-and-plan.md`, exported in full and unedited |
-| C8 | No model weights, audio recordings or API keys committed | **PASS** | 49 tracked files, largest 76 KB; no audio/model files in the tree or in history; no key-like strings (re-checked 2026-11-01). `results/*.jsonl` and `eval/*.jsonl` contain transcribed text only |
+| C8 | No model weights, audio recordings or API keys committed | **PASS** | 48 tracked files, largest 76 KB; no audio/model files in the tree or in history; no key-like strings (re-checked 2026-11-01). `results/*.jsonl` and `eval/*.jsonl` contain transcribed text only |
 
 ## D. What the interviewers will look at live ("How we evaluate" - Live result)
 

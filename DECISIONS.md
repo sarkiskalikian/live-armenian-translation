@@ -93,7 +93,7 @@ laptop's Windows environment; the sandbox is used only to edit files and run
 git. Clarified 2026-10-31: deterministic reading of saved files (no models,
 no timing, identical output on any OS - e.g. T-INSP-1) may run there and is
 labelled laptop-sandbox; anything with models or timing runs in Windows.
-Status: active. Commits: 692d014, 02a3617.
+Status: active. Commits: 692d014, 109c5bd.
 
 **D14 - ASR head: keep CTC (E3).** Motivation for testing RNN-T: Karpov et
 al., Interspeech 2025, Section 3 (hybrid FastConformer trained with RNN-T and
@@ -101,7 +101,7 @@ CTC decoders; RNN-T described as generally better) and Tables 1-2
 (RNN-T-only WER). Motivation, not proof. Outcome: RNN-T fp32 -0.52 WER
 points on FLEURS, 95 % CI -1.28 .. +0.26, p = 0.15, ~5x slower; not better
 on 4 call clips. Decision: keep CTC; RNN-T int8 not tested (precondition not
-met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: 02a3617.
+met); RNN-T export stays pinned (ec92cef). Status: closed. Commit: 109c5bd.
 
 **D15 - Warm-up and beam by measurement.** Warm-up: keep "minimal" (E1: first
 phrase within ~0.07 s of warm; "representative" +2 s start-up, no gain).
@@ -109,8 +109,8 @@ Start-up is reported separately from live latency. Beam: **beam 1**
 (E2: same meaning as beam 4 on 5 corrected call phrases, 203.5 vs 256.0 ms;
 T-MT-1: p50 1.31 vs 1.67 s, -0.7 chrF). Live check T-LIVE-5: 34 phrases,
 0 over 5 s, max 1.46 s, MT mean 0.37-0.41 s. Status: closed - warm-up
-"minimal" and beam 1 are the defaults (003ceaf).
-Commits: d1df237, 73f35a3, 003ceaf.
+"minimal" and beam 1 are the defaults (040b505).
+Commits: d46bbcf, 8b8a230, 040b505.
 
 **D16 - Final model pipeline.** Silero VAD -> [loopback only: WeSpeaker
 ResNet34 speaker label] -> FastConformer-hy CTC (fp32) -> NLLB-200 600M int8,
@@ -143,7 +143,7 @@ speech; VoxCeleb-trained model, untested on Armenian telephony audio.
 Status: implemented behind `--speakers` (default off). Threshold: ~~0.45
 placeholder~~ superseded by T-SPK-1 -> **0.30** (0.25-0.35 found the correct
 2 speakers with 92.3 % agreement; >= 0.45 split one person into several).
-Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, 95b0cd4).
+Embedding cost ~35-42 ms per phrase. Model pinned (f0c48c2, d1551c3).
 A -> B -> A at 0.30: PASS on real clips (T-SPK-1). A second real remote person
 is not available now (user, 18:58), so the separate live validation uses
 held-out recordings played into the loopback (T-SPK-2) instead of T-LIVE-7;
