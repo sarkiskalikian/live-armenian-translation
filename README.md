@@ -267,14 +267,9 @@ the VAD waits for before it ends a phrase.
 
 ## 8. What I would improve with more time
 
-1. Measure recognition on more real call audio, including my own accent, and
-   compare the RNN-T head and fine-tuned Whisper models there. FLEURS is read
-   speech.
-2. Try NLLB-200 1.3B for the place-name and short-reply errors, keeping it
-   only if it stays within the latency budget.
-3. Fix the zero insertion: correct timestamps by an offset instead of
-   inserting zeros into the audio. Then find the cause of the mic shortfall.
-4. Speaker labels: overlap-aware segmentation (diart/pyannote) for phrases
-   with two voices, and more labelled real calls to set the threshold.
-5. A macOS capture module (BlackHole) behind the same `CaptureStream`
-   interface.
+1. Test recognition on more real call audio with a wider range of accents,
+   and compare the RNN-T head and fine-tuned Whisper models there.
+2. Try NLLB-200 1.3B for the place-name and short-reply errors, if it stays
+   within the 5 s budget.
+3. Improve speaker labels: overlap-aware segmentation for phrases with two
+   voices, and more labelled calls to set the threshold.
