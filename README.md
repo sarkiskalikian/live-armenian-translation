@@ -183,8 +183,6 @@ All revisions and file hashes are pinned in `livetrans/models.py`.
     the size. Proposed, not tested.
   - **Large LLM translators:** too slow on this CPU for a 5 s budget. Not
     tested.
-- **Licence:** NLLB is non-commercial (CC-BY-NC). That is fine for this
-  challenge, but would have to be replaced in a product.
 
 ### Speakers: WeSpeaker ResNet34 + online clustering
 
@@ -244,9 +242,12 @@ the VAD waits for before it ends a phrase.
 - **Translation errors:** place names («Վանաձոր» became "Vancouver"). Very
   short replies are sometimes over-translated («Այո» became "I did.").
   Phrases under two Armenian letters are shown untranslated.
-- **Speaker labels:**
+- **Speaker labels.** In the real call test (T-LIVE-8) the two remote people
+  were told apart correctly as Speaker 1 and Speaker 2. The limits are in cases
+  that test did not cover:
   - One label per phrase: if two people talk inside one phrase, both get the
-    same label.
+    same label. The two speakers were still told apart over the call, but in
+    my tests the Armenian recognition made more mistakes on such mixed phrases.
   - Phrases under 1 s keep the previous remote label.
   - The threshold was tuned on little real data (two remote voices).
   - Two similar voices are harder to separate than the voices tested.
