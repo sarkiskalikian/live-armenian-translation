@@ -1,0 +1,57 @@
+# never commit audio, models or secrets
+recordings/
+logs/
+*.wav
+*.flac
+*.mp3
+models/
+data/
+*.onnx
+*.bin
+*.safetensors
+.env
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# --- secrets and credentials: never commit ---
+.env
+.env.*
+!.env.example
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+id_rsa*
+id_ed25519*
+credentials*.json
+client_secret*.json
+service_account*.json
+*service-account*.json
+token.json
+secrets.*
+*.secret
+.netrc
+.pypirc
+# --- databases and local data dumps ---
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.bak
+# --- notebooks / editors / OS ---
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- private material: never commit ---
+chats/
+eval/*.jsonl
+results/play_*.json
+!results/play_20261031-192428.json

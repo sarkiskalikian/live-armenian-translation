@@ -1,0 +1,29 @@
+{
+  "sentences": 100,
+  "model_load_s": 1.71,
+  "threads": 4,
+  "runs": {
+    "clean_beam1": {
+      "chrf": 61.08,
+      "bleu": 35.38,
+      "ms_p50": 1307,
+      "ms_p95": 2486,
+      "ms_max": 3637
+    },
+    "clean_beam4": {
+      "chrf": 61.74,
+      "bleu": 36.29,
+      "ms_p50": 1674,
+      "ms_p95": 3543,
+      "ms_max": 5937
+    }
+  },
+  "machine": {
+    "cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "logical_cores": 16,
+    "physical_cores": 12,
+    "ram_gb": 7.6,
+    "os": "Windows-11-10.0.26300-SP0"
+  },
+  "peak_ram_mb": 996.1
+}
