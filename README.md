@@ -129,10 +129,10 @@ Design choices:
   Armenian letters, the line is shown without a translation. NLLB invents
   whole sentences for one-letter input such as «Հ։» (T-OFF-1).
 
-The development record is in `PLAN.md`, `DECISIONS.md` (decisions D1-D20)
-and `TESTS.md` (every experiment: question, environment, configuration,
-result, decision, limitations, commit). `ACCEPTANCE.md` checks the brief item
-by item. `tools/` holds the measurement scripts and `results/` their outputs.
+The development record is in `DECISIONS.md` (decisions D1-D20) and
+`TESTS.md` (every experiment: question, environment, configuration, result,
+decision, limitations, commit). `tools/` holds the measurement scripts and
+`results/` their outputs.
 
 ## 5. Models: what I chose and why
 
